@@ -3,178 +3,401 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#2d6cdf">
+<meta name="theme-color" content="#7c5cfc">
 <title>智能日程助手</title>
 <style>
   :root{
-    --bg:#f4f6fb; --panel:#ffffff; --text:#222; --muted:#888; --border:#e3e7ef;
-    --primary:#2d6cdf; --primary-t:#fff; --accent:#ff7a45; --radius:8px;
-    --b-high:#e74c3c; --b-mid:#f39c12; --b-low:#27ae60;
-    --font:14px; --h1:22px;
+    --bg1:#13131f; --bg2:#0b0b12; --glow:rgba(124,92,252,0.20);
+    --panel:rgba(26,24,43,0.62); --panel-solid:#191726;
+    --text:#eef0f6; --muted:#8e8aa6; --border:rgba(255,255,255,0.07);
+    --primary:#7c5cfc; --primary2:#9b7bff; --accent:#5b8bff;
+    --b-high:#ff6b8b; --b-mid:#ffb454; --b-low:#56d6a0;
+    --b-proj:#9b8bff; --b-scale:#5ad1c9; --b-time:#6f8cff; --b-loc:#7c8aff; --b-done:#4ade80;
+    --radius:14px; --font:14px; --h1:22px;
   }
-  body.theme-teen{--bg:#e8f6ff; --panel:#ffffff; --primary:#00bcd4; --accent:#ff4081; --b-high:#ff5252; --b-mid:#ff9800; --b-low:#4caf50;}
-  body.theme-elder{--bg:#fffdf5; --panel:#fffef8; --text:#1a1a1a; --border:#d9d2c0; --primary:#1565c0; --accent:#e65100; --font:18px; --h1:30px;}
-  body.theme-acg{--bg:#fde9f3; --panel:#fff; --primary:#ff5fa2; --accent:#7c4dff; --b-high:#ff4081; --b-mid:#ffab40; --b-low:#69f0ae;}
+  /* 暗色主题变体（保持整体风格统一） */
+  body.theme-teen{--primary:#22d3d3;--primary2:#3ce0c0;--bg1:#0c1b22;--bg2:#07121a;--b-proj:#28d0c0;--accent:#ff6fae;--glow:rgba(34,211,211,0.18);}
+  body.theme-elder{--font:17px;--h1:28px;--primary:#ffb454;--primary2:#ffd08a;--bg1:#1a1408;--bg2:#0c0a05;--text:#fbf6e8;--muted:#bdb096;--glow:rgba(255,180,84,0.16);}
+  body.theme-acg{--primary:#ff5fa2;--primary2:#b06bff;--bg1:#190a1e;--bg2:#0c0510;--b-proj:#ff79c6;--accent:#7c4dff;--glow:rgba(255,95,162,0.20);}
+
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--text);font-size:var(--font);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}
-  header{background:var(--panel);border-bottom:1px solid var(--border);padding:10px 14px;position:sticky;top:0;z-index:10;}
-  .hdr-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-  h1{font-size:var(--h1);margin:0;color:var(--primary);}
-  .hdr-actions{display:flex;gap:8px;align-items:center;}
-  select,input,textarea,button{font-size:var(--font);font-family:inherit;}
-  nav{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
-  .tab-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--radius);cursor:pointer;}
-  .tab-btn.active{background:var(--primary);color:var(--primary-t);border-color:var(--primary);}
-  main{padding:14px;max-width:980px;margin:0 auto;}
+  html,body{margin:0;height:100%;}
+  body{
+    background:radial-gradient(1100px 620px at 82% -8%, var(--glow), transparent 60%), linear-gradient(160deg,var(--bg1),var(--bg2));
+    background-attachment:fixed;
+    color:var(--text);font-size:var(--font);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    display:flex;min-height:100vh;
+  }
+  select,input,textarea,button{font-size:var(--font);font-family:inherit;color:var(--text);}
+  button{cursor:pointer;}
+
+  /* ============ 左侧边栏 ============ */
+  .sidebar{
+    width:226px;flex-shrink:0;position:sticky;top:0;align-self:flex-start;
+    height:100vh;overflow-y:auto;padding:16px 12px;
+    background:rgba(12,11,20,0.86);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .logo{display:flex;align-items:center;gap:10px;padding:4px 6px 10px;}
+  .logo-ic{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary2));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 14px rgba(124,92,252,0.4);flex-shrink:0;}
+  .logo h1{font-size:16px;margin:0;font-weight:800;}
+  .logo .sub{font-size:11px;color:var(--muted);margin-top:1px;}
+
+  .side-theme{display:flex;align-items:center;gap:9px;margin:2px 0 6px;padding:9px 11px;border-radius:11px;background:rgba(255,255,255,0.04);border:1px solid var(--border);}
+  .side-theme .ic{font-size:15px;}
+  .side-theme select{flex:1;background:transparent;border:none;padding:0;font-weight:600;}
+
+  .nav-label{font-size:10px;color:var(--muted);margin:10px 8px 4px;letter-spacing:1px;}
+  .side-nav{display:flex;flex-direction:column;gap:3px;}
+  .tab-btn{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:transparent;border:none;color:var(--muted);
+    padding:9px 12px;border-radius:11px;font-size:13.5px;transition:.15s;
+  }
+  .tab-btn:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+  .tab-btn.active{background:linear-gradient(90deg,rgba(124,92,252,0.30),rgba(155,123,255,0.12));color:#fff;box-shadow:inset 0 0 0 1px rgba(155,123,255,0.35);}
+  .tab-btn .ic{font-size:16px;width:18px;text-align:center;}
+  .tab-btn .dot{margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--b-done);box-shadow:0 0 6px var(--b-done);}
+
+  .side-actions{display:flex;flex-direction:column;gap:3px;margin-top:4px;}
+  .side-actions button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:none;color:var(--muted);padding:9px 12px;border-radius:11px;font-size:13px;transition:.15s;}
+  .side-actions button:hover{background:rgba(255,255,255,0.05);color:var(--text);}
+  .btn-new{background:linear-gradient(90deg,var(--primary),var(--primary2))!important;color:#fff!important;font-weight:700;box-shadow:0 6px 18px rgba(124,92,252,0.35);}
+  .btn-new:hover{filter:brightness(1.07);}
+
+  .side-foot{margin-top:auto;padding-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .side-mini{display:flex;gap:6px;}
+  .side-mini button{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:8px;color:var(--text);font-size:12px;}
+  .side-mini button:hover{background:rgba(255,255,255,0.1);}
+  .btn-week{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;padding:9px;color:var(--text);font-size:12.5px;width:100%;}
+  .btn-week:hover{background:rgba(255,255,255,0.1);}
+  .notify{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--muted);font-size:12.5px;}
+  .notify .dot{width:7px;height:7px;border-radius:50%;background:#555;flex-shrink:0;}
+  .notify.on{color:var(--text);}
+  .notify.on .dot{background:var(--b-done);box-shadow:0 0 6px var(--b-done);}
+
+  /* ============ 主区 ============ */
+  .main{flex:1;min-width:0;padding:18px 24px 44px;max-width:1180px;margin:0 auto;width:100%;}
+
+  .banner{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    background:linear-gradient(120deg,rgba(124,92,252,0.22),rgba(91,139,255,0.10));
+    border:1px solid rgba(155,123,255,0.25);border-radius:18px;padding:18px 22px;margin-bottom:16px;
+  }
+  .banner h2{margin:0;font-size:22px;}
+  .banner h2 b{background:linear-gradient(90deg,var(--primary),var(--primary2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .banner p{margin:6px 0 0;color:var(--muted);font-size:13px;}
+  .banner .banner-btn{background:linear-gradient(90deg,var(--primary),var(--primary2));border:none;color:#fff;font-weight:700;padding:11px 20px;border-radius:12px;box-shadow:0 6px 18px rgba(124,92,252,0.35);white-space:nowrap;}
+
   .tab-panel{display:none;}
-  .tab-panel.active{display:block;}
-  h2{margin:0 0 12px;}
-  section,form{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
-  input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin:6px 0;background:#fff;color:var(--text);}
-  label{display:block;margin:6px 0;font-weight:600;}
-  button{background:var(--primary);color:var(--primary-t);border:none;padding:8px 14px;border-radius:6px;cursor:pointer;}
-  button:hover{filter:brightness(1.05);}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0;}
-  .item{border:1px solid var(--border);border-radius:6px;padding:10px;margin:8px 0;background:var(--panel);}
-  .item.done{opacity:.55;text-decoration:line-through;}
-  .title{font-weight:700;margin-bottom:4px;word-break:break-all;}
-  .meta{color:var(--muted);font-size:.92em;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-  .badge{background:#eef2fb;color:#456;border:1px solid var(--border);border-radius:20px;padding:1px 8px;font-size:.85em;}
-  .badge.b-high{background:#fdecea;color:var(--b-high);}
-  .badge.b-mid{background:#fef5e7;color:var(--b-mid);}
-  .badge.b-low{background:#eafaf1;color:var(--b-low);}
-  .actions{margin-top:8px;display:flex;gap:6px;}
-  .actions button{padding:5px 10px;font-size:.9em;}
-  .board-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  .kanban-col{border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--bg);}
-  .kanban-col h3{margin:0 0 8px;font-size:1em;}
-  .kanban-card{border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0;background:var(--panel);}
-  .cal-nav{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-  .cal-head{font-weight:700;text-align:center;padding:4px;color:var(--muted);}
-  .cal-cell{border:1px solid var(--border);border-radius:4px;min-height:56px;padding:4px;background:var(--panel);cursor:pointer;font-size:13px;}
-  .cal-cell.muted{color:#ccc;background:var(--bg);}
+  .tab-panel.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  h3.sec{margin:0 0 12px;font-size:16px;}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;backdrop-filter:blur(8px);}
+  input[type=text],input[type=password],input[type=number],textarea,select{
+    width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:10px;margin:4px 0;
+    background:var(--panel-solid);color:var(--text);
+  }
+  /* 原生下拉选项：必须单独指定深色背景+浅色文字，否则浅色文字叠在浅色原生弹层上不可见 */
+  select option{background:#191726;color:#eef0f6;}
+  select optgroup{background:#191726;color:#8e8aa6;}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(124,92,252,0.25);}
+  label{display:block;margin:4px 0;font-weight:600;color:var(--text);}
+  .field-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .field-row>div{flex:1;min-width:130px;}
+  .btn{background:var(--primary);color:#fff;border:none;padding:9px 16px;border-radius:10px;font-weight:600;transition:.15s;}
+  .btn:hover{filter:brightness(1.07);}
+  .btn.ghost{background:rgba(255,255,255,0.06);border:1px solid var(--border);}
+  .btn.danger{background:#c0395b;}
+
+  /* 搜索行 */
+  .search-row{display:flex;gap:10px;margin-bottom:12px;}
+  .search-box{position:relative;flex:1;}
+  .search-box::before{content:"🔍";position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.55;font-size:14px;}
+  .search-box input{padding-left:36px;border-radius:12px;}
+  .search-btn{background:linear-gradient(90deg,var(--primary),var(--primary2));border:none;color:#fff;font-weight:600;padding:0 20px;border-radius:12px;white-space:nowrap;}
+
+  /* 筛选行 */
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:20px;font-size:13px;transition:.15s;}
+  .chip:hover{color:var(--text);}
+  .chip.active{background:linear-gradient(90deg,var(--primary),var(--primary2));color:#fff;border-color:transparent;font-weight:600;}
+  .filter-row select{width:auto;flex:0 0 auto;min-width:130px;border-radius:20px;padding:7px 14px;}
+  .batch{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:20px;font-size:13px;white-space:nowrap;}
+  .batch:hover{background:rgba(255,255,255,0.12);}
+
+  /* 双列卡片网络 */
+  .todo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .item{border:1px solid var(--border);border-radius:14px;padding:14px 15px;background:var(--panel);transition:.15s;position:relative;backdrop-filter:blur(6px);}
+  .item.pri-1{border-left:3px solid var(--b-high);}
+  .item.pri-2{border-left:3px solid var(--b-mid);}
+  .item.pri-3{border-left:3px solid var(--b-low);}
+  .item:hover{border-color:rgba(155,123,255,0.4);transform:translateY(-1px);}
+  .item.done{opacity:.62;}
+  .item.done .title{text-decoration:line-through;}
+  .title{font-weight:700;font-size:15.5px;margin-bottom:6px;word-break:break-all;display:flex;align-items:center;gap:10px;}
+  .title .chk{width:20px;height:20px;border-radius:50%;border:2px solid var(--b-low);display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;cursor:pointer;color:var(--b-done);}
+  .title .chk.on{background:var(--b-done);border-color:var(--b-done);color:#0b0b12;font-weight:800;}
+  .desc{color:var(--muted);font-size:12.5px;line-height:1.6;margin:2px 0 8px;word-break:break-all;}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:2px;}
+  .badge{background:rgba(255,255,255,0.05);color:#cfc8e6;border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:.8em;}
+  .badge.b-done{background:rgba(74,222,128,0.16);color:var(--b-done);}
+  .badge.b-time{background:rgba(111,140,255,0.14);color:var(--b-time);}
+  .badge.b-loc{background:rgba(124,138,255,0.14);color:var(--b-loc);}
+  .badge.b-proj{background:rgba(155,139,255,0.16);color:var(--b-proj);}
+  .badge.b-scale{background:rgba(90,209,201,0.14);color:var(--b-scale);}
+  .badge.b-high{background:rgba(255,107,139,0.16);color:var(--b-high);}
+  .badge.b-mid{background:rgba(255,180,84,0.16);color:var(--b-mid);}
+  .badge.b-low{background:rgba(86,214,160,0.16);color:var(--b-low);}
+  .actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
+  .actions button{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text);padding:5px 11px;border-radius:9px;font-size:.85em;}
+  .actions button:hover{background:rgba(255,255,255,0.12);}
+
+  .board-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .kanban-col{border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(255,255,255,0.03);}
+  .kanban-col h3{margin:0 0 10px;font-size:14px;color:var(--text);}
+  .kanban-card{border:1px solid var(--border);border-radius:11px;padding:10px;margin:8px 0;background:var(--panel);}
+  .cal-nav{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-head{font-weight:700;text-align:center;padding:6px;color:var(--muted);font-size:12px;}
+  .cal-cell{border:1px solid var(--border);border-radius:9px;min-height:62px;padding:6px;background:var(--panel);cursor:pointer;font-size:13px;}
+  .cal-cell:hover{border-color:var(--primary);}
+  .cal-cell.muted{color:#4a4758;background:rgba(255,255,255,0.02);}
   .cal-cell.today{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset;}
   .cal-day{font-weight:700;}
-  .cal-dot{background:var(--primary);color:#fff;border-radius:10px;padding:0 6px;font-size:11px;display:inline-block;margin-top:2px;}
-  .stat-card{border:1px solid var(--border);border-radius:6px;padding:12px;margin:8px 0;}
-  .stat-row{display:flex;align-items:center;gap:8px;margin:6px 0;}
-  .stat-label{width:64px;}
-  .stat-bar{flex:1;height:12px;background:var(--bg);border-radius:6px;overflow:hidden;}
-  .stat-bar i{display:block;height:100%;background:var(--primary);}
-  .stat-num{width:40px;text-align:right;}
+  .cal-dot{background:linear-gradient(90deg,var(--primary),var(--primary2));color:#fff;border-radius:10px;padding:0 6px;font-size:11px;display:inline-block;margin-top:3px;}
+  .stat-card{border:1px solid var(--border);border-radius:14px;padding:14px;margin:10px 0;background:var(--panel);}
+  .stat-card h3{margin:0 0 10px;font-size:14px;}
+  .stat-row{display:flex;align-items:center;gap:8px;margin:7px 0;}
+  .stat-label{width:70px;color:var(--muted);}
+  .stat-bar{flex:1;height:12px;background:rgba(255,255,255,0.07);border-radius:6px;overflow:hidden;}
+  .stat-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--primary2));}
+  .stat-num{width:42px;text-align:right;}
   .muted{color:var(--muted);}
-  .ai-block{border:1px solid var(--border);border-radius:6px;padding:10px;margin:8px 0;}
-  .ai-block h3{margin:0 0 8px;}
-  #chat-box{border:1px solid var(--border);border-radius:6px;padding:8px;height:220px;overflow:auto;margin-bottom:8px;background:var(--bg);}
-  .msg{margin:6px 0;padding:6px 10px;border-radius:8px;max-width:80%;word-break:break-all;}
-  .msg.user{background:var(--primary);color:var(--primary-t);margin-left:auto;}
-  .msg.ai{background:var(--panel);border:1px solid var(--border);}
+
+  .ai-block{border:1px solid var(--border);border-radius:14px;padding:14px;margin:10px 0;background:var(--panel);}
+  .ai-block h3{margin:0 0 10px;font-size:15px;}
+  #chat-box{border:1px solid var(--border);border-radius:11px;padding:10px;height:240px;overflow:auto;margin-bottom:10px;background:rgba(0,0,0,0.22);color:var(--text);}
+  .msg{margin:8px 0;padding:8px 12px;border-radius:12px;max-width:82%;word-break:break-all;font-size:13.5px;line-height:1.5;color:var(--text);}
+  .msg.user{background:linear-gradient(90deg,var(--primary),var(--primary2));color:#fff;margin-left:auto;}
+  .msg.ai{background:var(--panel-solid);border:1px solid var(--border);}
   .chat-input{display:flex;gap:8px;}
   .chat-input input{flex:1;}
-  pre{white-space:pre-wrap;word-break:break-all;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;margin:8px 0;}
-  .file-btn{display:inline-block;background:var(--primary);color:var(--primary-t);border-radius:6px;padding:8px 14px;cursor:pointer;}
+  pre{white-space:pre-wrap;word-break:break-all;background:rgba(0,0,0,0.25);border:1px solid var(--border);border-radius:11px;padding:10px;margin:10px 0;font-size:13px;}
+  .file-btn{display:inline-block;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:10px;padding:9px 16px;cursor:pointer;color:var(--text);}
   .file-btn input{display:none;}
-  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#333;color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:.3s;z-index:99;max-width:90%;}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#221f33;color:#fff;padding:11px 18px;border-radius:11px;opacity:0;transition:.3s;z-index:99;max-width:90%;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,0.45);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
-  .modal-box{background:var(--panel);border-radius:12px;padding:18px;max-width:340px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,.2);}
-  .modal-box h3{margin:0 0 10px;color:var(--primary);}
-  .modal-box p{margin:0 0 14px;line-height:1.6;}
-  .hint{font-size:.85em;color:var(--muted);margin:6px 0;}
+  .hint{font-size:.85em;color:var(--muted);margin:8px 0;line-height:1.6;}
+
+  @media(max-width:820px){
+    body{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border);flex-direction:column;}
+    .side-nav{flex-direction:row;flex-wrap:wrap;}
+    .tab-btn{flex:1 1 auto;min-width:80px;justify-content:center;}
+    .side-actions{flex-direction:row;flex-wrap:wrap;}
+    .side-actions button{flex:1 1 auto;min-width:110px;justify-content:center;}
+    .side-foot{flex-direction:row;flex-wrap:wrap;}
+    .side-mini{flex:1;}
+    .main{padding:14px;}
+    .todo-grid{grid-template-columns:1fr;}
+    .board-cols{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body class="theme-standard">
-  <header>
-    <div class="hdr-top">
-      <h1>智能日程助手</h1>
-      <div class="hdr-actions">
-        <select id="theme-select" title="切换主题">
-          <option value="standard">标准</option>
-          <option value="teen">青少年</option>
-          <option value="elder">老年</option>
-          <option value="acg">二次元</option>
-        </select>
-        <button id="notify-btn" type="button">启用通知</button>
-        <button id="install-btn" type="button">＋桌面</button>
+
+  <!-- ============ 左侧边栏 ============ -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-ic">🗓️</div>
+      <div>
+        <h1>智能日程助手</h1>
+        <div class="sub">AI 驱动的日程管理</div>
       </div>
     </div>
-    <nav>
-      <button class="tab-btn active" data-tab="todos">待办列表</button>
-      <button class="tab-btn" data-tab="board">看板</button>
-      <button class="tab-btn" data-tab="calendar">日历</button>
-      <button class="tab-btn" data-tab="stats">统计</button>
-      <button class="tab-btn" data-tab="trash">回收站</button>
-      <button class="tab-btn" data-tab="ai">AI 助手</button>
-      <button class="tab-btn" data-tab="settings">设置</button>
-    </nav>
-  </header>
 
-  <main>
+    <div class="side-theme">
+      <span class="ic">🎨</span>
+      <select id="theme-select" title="切换主题">
+        <option value="standard">主题 · 极夜紫</option>
+        <option value="teen">主题 · 青蓝</option>
+        <option value="elder">主题 · 暖橙</option>
+        <option value="acg">主题 · 粉紫</option>
+      </select>
+    </div>
+
+    <div class="nav-label">浏览</div>
+    <nav class="side-nav">
+      <button class="tab-btn active" data-tab="todos"><span class="ic">📋</span>列表</button>
+      <button class="tab-btn" data-tab="calendar"><span class="ic">📅</span>日历</button>
+      <button class="tab-btn" data-tab="board"><span class="ic">🗂️</span>看板</button>
+      <button class="tab-btn" data-tab="stats"><span class="ic">📊</span>统计</button>
+      <button class="tab-btn" data-tab="trash"><span class="ic">🗑️</span>回收站</button>
+    </nav>
+
+    <div class="nav-label">操作</div>
+    <div class="side-actions">
+      <button class="btn-new" id="btn-new"><span class="ic">＋</span>新建日程</button>
+      <button class="tab-btn" data-tab="agent"><span class="ic">🤖</span>日程 Agent</button>
+      <button class="tab-btn" data-tab="ai"><span class="ic">💬</span>AI 助手</button>
+      <button id="btn-import"><span class="ic">⬇️</span>导入</button>
+      <button class="tab-btn" data-tab="settings"><span class="ic">⚙️</span>设置<span class="dot" id="notify-dot" style="display:none"></span></button>
+    </div>
+
+    <div class="side-foot">
+      <div class="side-mini">
+        <button id="btn-json">JSON</button>
+        <button id="btn-ical">日历</button>
+      </div>
+      <button class="btn-week" id="btn-week">🖼️ 导出本周长图</button>
+      <button class="notify" id="notify-btn" type="button"><span class="dot"></span>🔔 启用通知</button>
+    </div>
+  </aside>
+
+  <!-- ============ 主区 ============ -->
+  <main class="main">
+    <!-- 横幅 -->
+    <div class="banner">
+      <div>
+        <h2 id="banner-count">你还有 <b>0</b> 项待办</h2>
+        <p>让 AI 帮你排兵、拆解、一句话批量添加。</p>
+      </div>
+      <button class="banner-btn" id="banner-new">＋ 新建日程</button>
+    </div>
+
     <!-- 待办列表 -->
     <section id="todos" class="tab-panel active">
-      <h2>待办列表</h2>
-      <form id="add-form">
-        <input type="text" id="f-title" placeholder="标题（必填）" required>
-        <input type="text" id="f-due" placeholder="时间，如 2026-10-31 18:00">
-        <label>优先级
-          <select id="f-priority">
-            <option value="1">高</option>
-            <option value="2" selected>中</option>
-            <option value="3">低</option>
-          </select>
-        </label>
-        <input type="text" id="f-tags" placeholder="标签，逗号分隔">
-        <input type="text" id="f-note" placeholder="备注">
-        <label><input type="checkbox" id="f-reminder"> 提醒</label>
-        <input type="number" id="f-offset" placeholder="提前分钟" value="0" min="0">
-        <button type="submit">添加</button>
-      </form>
-      <div id="todo-list"></div>
+      <div class="card">
+        <h3 class="sec">快速添加日程</h3>
+        <form id="add-form">
+          <div class="field-row">
+            <div><input type="text" id="f-title" placeholder="标题（必填）" required></div>
+            <div><input type="text" id="f-due" placeholder="时间，如 2026-10-31 18:00"></div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label>优先级
+                <select id="f-priority">
+                  <option value="1">高</option>
+                  <option value="2" selected>中</option>
+                  <option value="3">低</option>
+                </select>
+              </label>
+            </div>
+            <div>
+              <label>体量（规模）
+                <select id="f-scale">
+                  <option value="1">小</option>
+                  <option value="2" selected>中</option>
+                  <option value="3">大</option>
+                </select>
+              </label>
+            </div>
+            <div><label>项目（归属）<input type="text" id="f-project" placeholder="如 装修 / 论文"></label></div>
+            <div><label>地点<input type="text" id="f-location" placeholder="如 综合教学楼 153"></label></div>
+            <div><label>标签<input type="text" id="f-tags" placeholder="逗号分隔"></label></div>
+          </div>
+          <div class="field-row">
+            <div><input type="text" id="f-note" placeholder="备注 / 描述"></div>
+          </div>
+          <div class="field-row">
+            <div><label style="font-weight:600"><input type="checkbox" id="f-reminder"> 提醒</label></div>
+            <div><label style="font-weight:600">提前分钟<input type="number" id="f-offset" value="0" min="0" style="margin-top:4px"></label></div>
+            <div style="display:flex;align-items:flex-end"><button type="submit" class="btn">添加</button></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="search-row">
+        <div class="search-box"><input type="text" id="search-input" placeholder="搜索日程、备注或标签…（回车搜索）"></div>
+        <button class="search-btn" id="search-btn">🔍 搜索</button>
+      </div>
+
+      <div class="filter-row">
+        <div class="chips" id="status-chips">
+          <button class="chip active" data-status="all">全部</button>
+          <button class="chip" data-status="todo">待办</button>
+          <button class="chip" data-status="in_progress">进行中</button>
+          <button class="chip" data-status="done">已完成</button>
+        </div>
+        <select id="filter-priority">
+          <option value="0">全部优先级</option>
+          <option value="1">高优先级</option>
+          <option value="2">中优先级</option>
+          <option value="3">低优先级</option>
+        </select>
+        <select id="filter-project"><option value="">全部项目</option></select>
+        <select id="filter-tag"><option value="">全部标签</option></select>
+        <button class="batch" id="batch-btn">批量管理</button>
+      </div>
+
+      <div id="todo-list" class="todo-grid"></div>
     </section>
 
     <!-- 看板 -->
     <section id="board" class="tab-panel">
-      <h2>看板（按状态）</h2>
+      <h3 class="sec">看板（按状态）</h3>
       <div id="board-cols" class="board-cols"></div>
     </section>
 
     <!-- 日历 -->
     <section id="calendar" class="tab-panel">
-      <h2>日历</h2>
+      <h3 class="sec">日历</h3>
       <div class="cal-nav">
-        <button id="cal-prev">‹ 上月</button>
+        <button class="btn ghost" id="cal-prev">‹ 上月</button>
         <span id="cal-title"></span>
-        <button id="cal-next">下月 ›</button>
-        <button id="cal-today">今天</button>
+        <button class="btn ghost" id="cal-next">下月 ›</button>
+        <button class="btn ghost" id="cal-today">今天</button>
       </div>
       <div id="cal-grid" class="cal-grid"></div>
-      <h3 id="cal-day-title"></h3>
-      <div id="cal-day-list"></div>
+      <h3 class="sec" id="cal-day-title" style="margin-top:16px"></h3>
+      <div id="cal-day-list" class="todo-grid"></div>
     </section>
 
     <!-- 统计 -->
     <section id="stats" class="tab-panel">
-      <h2>统计</h2>
+      <h3 class="sec">统计</h3>
       <div id="stats-box"></div>
     </section>
 
     <!-- 回收站 -->
     <section id="trash" class="tab-panel">
-      <h2>回收站</h2>
-      <div class="row">
-        <button id="trash-empty">清空回收站</button>
+      <h3 class="sec">回收站</h3>
+      <div class="row" style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn danger" id="trash-empty">清空回收站</button>
       </div>
-      <div id="trash-list"></div>
+      <div id="trash-list" class="todo-grid"></div>
+    </section>
+
+    <!-- 日程 Agent -->
+    <section id="agent" class="tab-panel">
+      <h3 class="sec">日程 Agent</h3>
+      <div class="ai-block">
+        <h3>🤖 智能批量整理</h3>
+        <p class="hint">让 AI 一次性分析全部日程，给出<b>优先级调整、状态建议、重复项合并</b>方案。需先在「设置」配置 AI 接口。点击后会生成方案，可一键应用。</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="agent-organize">🔒 批量整理（需配置 AI）</button>
+          <button class="btn ghost" id="agent-apply" style="display:none">应用方案</button>
+        </div>
+        <pre id="agent-result">尚未运行。</pre>
+      </div>
+      <div class="ai-block">
+        <h3>⚡ 快速智能操作</h3>
+        <p class="hint">也可在「AI 助手」里用一句话批量添加或询问排期建议。</p>
+        <button class="btn ghost" onclick="switchTo('ai')">前往 AI 助手</button>
+      </div>
     </section>
 
     <!-- AI 助手 -->
     <section id="ai" class="tab-panel">
-      <h2>AI 助手</h2>
+      <h3 class="sec">AI 助手</h3>
       <div class="ai-block">
         <h3>智能添加</h3>
-        <textarea id="ai-text" rows="3" placeholder="用一句话描述，例如：明天下午3点提醒我开会，高优先级"></textarea>
-        <button id="ai-add-btn">解析并添加</button>
+        <textarea id="ai-text" rows="3" placeholder="用一句话描述，例如：明天下午3点提醒我开会，高优先级，项目 周报"></textarea>
+        <button class="btn" id="ai-add-btn">解析并添加</button>
         <pre id="ai-result"></pre>
       </div>
       <div class="ai-block">
@@ -182,81 +405,74 @@
         <div id="chat-box"></div>
         <div class="chat-input">
           <input type="text" id="chat-input" placeholder="输入消息…">
-          <button id="chat-send">发送</button>
+          <button class="btn" id="chat-send">发送</button>
         </div>
       </div>
     </section>
 
     <!-- 设置 -->
     <section id="settings" class="tab-panel">
-      <h2>设置（AI 接入）</h2>
-      <form id="settings-form">
-        <label>服务商预设（选完会自动填 Base URL / 模型，可手动改）
-          <select id="s-provider">
-            <option value="">自定义</option>
-            <option value="deepseek">DeepSeek</option>
-            <option value="openai">OpenAI</option>
-            <option value="doubao">豆包（火山方舟）</option>
-            <option value="qwen">通义千问</option>
-          </select>
-        </label>
-        <label>Base URL
-          <input type="text" id="s-base-url" placeholder="https://api.deepseek.com">
-        </label>
-        <label>API Key
-          <input type="password" id="s-api-key" placeholder="sk-...">
-        </label>
-        <label>模型
-          <input type="text" id="s-model" placeholder="deepseek-chat">
-        </label>
-        <label>代理（CORS 代理，可选，解决浏览器跨域）
-          <input type="text" id="s-proxy" placeholder="如 https://corsproxy.io/?url=">
-        </label>
-        <p class="hint">浏览器直连大模型可能被 CORS 拦截。填了「代理」后，请求会经该代理转发（格式需为 <code>代理地址?url=</code>，如 <code>https://corsproxy.io/?url=</code>）。选 DeepSeek 预设后，Base URL 填 <code>https://api.deepseek.com</code>、模型填 <code>deepseek-chat</code>（或 <code>deepseek-reasoner</code>）。</p>
-        <div class="row">
-          <button type="submit">保存设置</button>
-          <button type="button" id="test-btn">测试连接</button>
-        </div>
-        <pre id="settings-msg"></pre>
-      </form>
-
-      <h3>数据导入 / 导出</h3>
-      <div class="row">
-        <button id="export-btn">导出 JSON</button>
-        <button id="export-ical-btn">导出 iCal(.ics)</button>
-        <button id="import-btn">导入 JSON</button>
-        <label class="file-btn">导入文件(TXT/CSV/JSON)
-          <input type="file" id="file-input" accept=".txt,.md,.csv,.json">
-        </label>
+      <h3 class="sec">设置（AI 接入）</h3>
+      <div class="card">
+        <form id="settings-form">
+          <label>服务商预设（选完会自动填 Base URL / 模型，可手动改）
+            <select id="s-provider">
+              <option value="">自定义</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="openai">OpenAI</option>
+              <option value="doubao">豆包（火山方舟）</option>
+              <option value="qwen">通义千问</option>
+            </select>
+          </label>
+          <label>Base URL
+            <input type="text" id="s-base-url" placeholder="https://api.deepseek.com">
+          </label>
+          <label>API Key
+            <input type="password" id="s-api-key" placeholder="sk-...">
+          </label>
+          <label>模型
+            <input type="text" id="s-model" placeholder="deepseek-chat">
+          </label>
+          <label>代理（CORS 代理，可选，解决浏览器跨域）
+            <input type="text" id="s-proxy" placeholder="如 https://corsproxy.io/?url=">
+          </label>
+          <p class="hint">浏览器直连大模型可能被 CORS 拦截。填了「代理」后，请求会经该代理转发（格式需为 <code>代理地址?url=</code>，如 <code>https://corsproxy.io/?url=</code>）。选 DeepSeek 预设后，Base URL 填 <code>https://api.deepseek.com</code>、模型填 <code>deepseek-chat</code>（或 <code>deepseek-reasoner</code>）。</p>
+          <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="submit" class="btn">保存设置</button>
+            <button type="button" class="btn ghost" id="test-btn">测试连接</button>
+          </div>
+          <pre id="settings-msg"></pre>
+        </form>
       </div>
-      <textarea id="io-text" rows="6" placeholder="导入时粘贴 JSON；导出时此处显示结果"></textarea>
-      <pre id="io-msg"></pre>
+
+      <div class="card">
+        <h3 class="sec">数据导入 / 导出</h3>
+        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="export-btn">导出 JSON</button>
+          <button class="btn" id="export-ical-btn">导出 iCal(.ics)</button>
+          <button class="btn" id="import-btn">导入 JSON</button>
+          <label class="file-btn">导入文件(TXT/CSV/JSON)
+            <input type="file" id="file-input" accept=".txt,.md,.csv,.json">
+          </label>
+        </div>
+        <textarea id="io-text" rows="6" placeholder="导入时粘贴 JSON；导出时此处显示结果"></textarea>
+        <pre id="io-msg"></pre>
+      </div>
     </section>
   </main>
 
   <div id="toast" class="toast"></div>
 
-  <!-- 添加到桌面指引弹窗 -->
-  <div id="install-modal" class="modal" style="display:none;">
-    <div class="modal-box">
-      <h3>添加到手机桌面</h3>
-      <p id="install-guide-text"></p>
-      <div class="row">
-        <button id="copy-link-btn" type="button">复制当前链接</button>
-        <button id="install-close-btn" type="button">我知道了</button>
-      </div>
-    </div>
-  </div>
-
 <script>
 // ===================== 数据存储（localStorage） =====================
 const LS_TODOS = 'ss_todos', LS_CFG = 'ss_cfg', LS_THEME = 'ss_theme';
-let TODOS = [];                 // 仅活动项（不含已删除）
-let TRASH = [];                 // 回收站
+let TODOS = [];
+let TRASH = [];
 let CONFIG = { base_url: 'https://api.openai.com/v1', api_key: '', model: 'gpt-3.5-turbo', proxy: '' };
 const notified = new Set();
 
 const PRIORITY = { 1: '高', 2: '中', 3: '低' };
+const SCALE = { 1: '小', 2: '中', 3: '大' };
 const STATUS = { todo: '待办', in_progress: '进行中', done: '已完成' };
 const STATUS_ORDER = ['todo', 'in_progress', 'done'];
 
@@ -289,6 +505,9 @@ function addTodo(p) {
   const t = {
     id: genId(), title: p.title, due: p.due || null,
     priority: p.priority || 2,
+    scale: p.scale || 2,
+    project: p.project || '',
+    location: p.location || '',
     tags: Array.isArray(p.tags) ? p.tags : (p.tags || '').split(',').map(s => s.trim()).filter(Boolean),
     note: p.note || '', status: p.status || 'todo',
     reminder: !!p.reminder, reminder_offset: p.reminder_offset || 0,
@@ -302,10 +521,14 @@ function softDelete(id) { const t = findTodo(id); if (!t) return; t.deleted = tr
 function restoreTodo(id) { const t = TRASH.find(x => x.id === id); if (!t) return; t.deleted = false; t.reminder_fired = false; TODOS.push(t); TRASH = TRASH.filter(x => x.id !== id); saveTodos(); }
 function purge(id) { TRASH = TRASH.filter(x => x.id !== id); saveTodos(); }
 function emptyTrash() { TRASH = []; saveTodos(); }
-function loadState() { const tb = document.querySelector('.tab-btn[data-tab="trash"]'); if (tb) tb.textContent = TRASH.length > 0 ? `回收站(${TRASH.length})` : '回收站'; }
+function loadState() {
+  const tb = document.querySelector('.tab-btn[data-tab="trash"]');
+  if (tb) tb.innerHTML = '<span class="ic">🗑️</span>' + (TRASH.length > 0 ? `回收站(${TRASH.length})` : '回收站');
+}
 
-// ===================== 标签页 =====================
+// ===================== 标签页切换 =====================
 let currentTab = 'todos';
+function switchTo(tab) { const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`); if (btn) btn.click(); }
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -320,20 +543,38 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// ===================== 列表视图 =====================
+// ===================== 列表视图 + 筛选 =====================
+let filters = { q: '', status: 'all', priority: 0, project: '', tag: '' };
+function refreshFilterOptions() {
+  const projSel = $('filter-project'), tagSel = $('filter-tag');
+  const curP = projSel.value, curT = tagSel.value;
+  const projs = [...new Set(TODOS.map(t => t.project).filter(Boolean))].sort();
+  const tags = [...new Set(TODOS.flatMap(t => t.tags || []))].sort();
+  projSel.innerHTML = '<option value="">全部项目</option>' + projs.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+  tagSel.innerHTML = '<option value="">全部标签</option>' + tags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+  projSel.value = curP; tagSel.value = curT;
+}
+function updateBanner() {
+  const pending = TODOS.filter(t => t.status !== 'done').length;
+  $('banner-count').innerHTML = `你还有 <b>${pending}</b> 项待办`;
+}
 function todoCard(t) {
-  const pcls = t.priority === 1 ? 'b-high' : t.priority === 3 ? 'b-low' : 'b-mid';
+  const done = t.status === 'done';
+  const desc = t.note ? `<div class="desc">${escapeHtml(t.note)}</div>` : '';
   const tags = (t.tags || []).map(x => `<span class="badge">${escapeHtml(x)}</span>`).join('');
+  const proj = t.project ? `<span class="badge b-proj">${escapeHtml(t.project)}</span>` : '';
+  const loc = t.location ? `<span class="badge b-loc">◎ ${escapeHtml(t.location)}</span>` : '';
+  const time = t.due ? `<span class="badge b-time">${escapeHtml(t.due)}</span>` : '';
+  const scl = t.scale ? `<span class="badge b-scale">体量 ${SCALE[t.scale] || t.scale}</span>` : '';
   const rem = t.reminder ? `<span class="badge">提醒${t.reminder_offset || ''}分</span>` : '';
   const over = isOverdue(t) ? '<span class="badge b-high">逾期</span>' : '';
-  return `<div class="item ${t.status === 'done' ? 'done' : ''}">
-    <div class="title"><b>${escapeHtml(t.title)}</b></div>
+  const chk = `<span class="chk ${done ? 'on' : ''}" onclick="cycleStatus('${t.id}')">${done ? '✓' : ''}</span>`;
+  return `<div class="item pri-${t.priority} ${done ? 'done' : ''}">
+    <div class="title">${chk}<b>${escapeHtml(t.title)}</b></div>
+    ${desc}
     <div class="meta">
-      <span class="badge ${pcls}">${PRIORITY[t.priority] || t.priority}</span>
-      <span class="badge">${STATUS[t.status] || t.status}</span>
-      ${t.due ? '⏰ ' + escapeHtml(t.due) + ' ' : ''}
-      ${tags}${rem}${over}
-      ${t.note ? '｜' + escapeHtml(t.note) : ''}
+      ${done ? '<span class="badge b-done">✓ 已完成</span>' : ''}
+      ${time}${loc}${proj}${scl}${tags}${rem}${over}
     </div>
     <div class="actions">
       <button onclick="cycleStatus('${t.id}')">状态切换</button>
@@ -343,9 +584,18 @@ function todoCard(t) {
 }
 function renderTodos() {
   const box = $('todo-list');
-  if (!TODOS.length) { box.innerHTML = '<p>暂无待办，去「AI 助手」或用上方表单添加。</p>'; return; }
-  const sorted = [...TODOS].sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999') || a.priority - b.priority);
-  box.innerHTML = sorted.map(todoCard).join('');
+  let list = [...TODOS];
+  const q = filters.q.trim().toLowerCase();
+  if (q) list = list.filter(t => (t.title + ' ' + (t.note || '') + ' ' + (t.tags || []).join(' ') + ' ' + (t.project || '') + ' ' + (t.location || '')).toLowerCase().includes(q));
+  if (filters.status !== 'all') list = list.filter(t => t.status === filters.status);
+  if (filters.priority) list = list.filter(t => t.priority === filters.priority);
+  if (filters.project) list = list.filter(t => t.project === filters.project);
+  if (filters.tag) list = list.filter(t => (t.tags || []).includes(filters.tag));
+  list.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999') || a.priority - b.priority);
+  refreshFilterOptions();
+  updateBanner();
+  if (!list.length) { box.innerHTML = '<p class="muted">没有匹配的日程，去「AI 助手」或用上方表单添加。</p>'; return; }
+  box.innerHTML = list.map(t => todoCard(t)).join('');
 }
 async function cycleStatus(id) {
   const t = findTodo(id); if (!t) return;
@@ -358,6 +608,21 @@ async function delTodo(id) {
   softDelete(id); renderTodos(); loadState();
 }
 
+// 状态药丸筛选
+document.querySelectorAll('#status-chips .chip').forEach(ch => {
+  ch.addEventListener('click', () => {
+    document.querySelectorAll('#status-chips .chip').forEach(c => c.classList.remove('active'));
+    ch.classList.add('active');
+    filters.status = ch.dataset.status; renderTodos();
+  });
+});
+// 筛选交互
+$('search-input').addEventListener('input', e => { filters.q = e.target.value; renderTodos(); });
+$('search-btn').onclick = () => { filters.q = $('search-input').value; renderTodos(); };
+$('filter-priority').addEventListener('change', e => { filters.priority = parseInt(e.target.value, 10); renderTodos(); });
+$('filter-project').addEventListener('change', e => { filters.project = e.target.value; renderTodos(); });
+$('filter-tag').addEventListener('change', e => { filters.tag = e.target.value; renderTodos(); });
+
 // ===================== 看板 =====================
 function renderBoard() {
   const cols = { todo: [], in_progress: [], done: [] };
@@ -366,8 +631,9 @@ function renderBoard() {
     const items = (cols[s] || []).sort((a, b) => a.priority - b.priority)
       .map(t => `<div class="kanban-card ${t.status === 'done' ? 'done' : ''}">
         <div class="title"><b>${escapeHtml(t.title)}</b></div>
-        <div class="meta">${t.due ? '⏰ ' + escapeHtml(t.due) : ''}
-          <span class="badge ${t.priority === 1 ? 'b-high' : t.priority === 3 ? 'b-low' : 'b-mid'}">${PRIORITY[t.priority] || t.priority}</span></div>
+        <div class="meta">${t.due ? `<span class="badge b-time">${escapeHtml(t.due)}</span>` : ''}
+          ${t.location ? `<span class="badge b-loc">◎ ${escapeHtml(t.location)}</span>` : ''}
+          ${t.project ? `<span class="badge b-proj">${escapeHtml(t.project)}</span>` : ''}</div>
         <div class="actions"><button onclick="cycleStatus('${t.id}')">切换</button>
         <button onclick="delTodo('${t.id}')">删</button></div>
       </div>`).join('');
@@ -403,7 +669,7 @@ function renderCalendar() {
 function selectDay(key) {
   const list = TODOS.filter(t => t.due && t.due.startsWith(key));
   $('cal-day-title').textContent = `${key} 的日程（${list.length} 条）`;
-  $('cal-day-list').innerHTML = list.length ? list.map(todoCard).join('') : '<p class="muted">当天没有日程</p>';
+  $('cal-day-list').innerHTML = list.length ? list.map(t => todoCard(t)).join('') : '<p class="muted">当天没有日程</p>';
 }
 $('cal-prev').onclick = () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); };
 $('cal-next').onclick = () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); };
@@ -420,16 +686,27 @@ function renderStats() {
   const total = TODOS.length;
   const byStatus = { todo: 0, in_progress: 0, done: 0 };
   const byPri = { 1: 0, 2: 0, 3: 0 };
+  const byScale = { 1: 0, 2: 0, 3: 0 };
+  const projCount = {};
   const tagCount = {};
-  TODOS.forEach(t => { byStatus[t.status] = (byStatus[t.status] || 0) + 1; byPri[t.priority] = (byPri[t.priority] || 0) + 1; (t.tags || []).forEach(tag => { tagCount[tag] = (tagCount[tag] || 0) + 1; }); });
+  TODOS.forEach(t => {
+    byStatus[t.status] = (byStatus[t.status] || 0) + 1;
+    byPri[t.priority] = (byPri[t.priority] || 0) + 1;
+    byScale[t.scale || 2] = (byScale[t.scale || 2] || 0) + 1;
+    const pk = t.project || '未分类'; projCount[pk] = (projCount[pk] || 0) + 1;
+    (t.tags || []).forEach(tag => { tagCount[tag] = (tagCount[tag] || 0) + 1; });
+  });
   const done = byStatus.done;
   const rate = total ? Math.round(done / total * 100) : 0;
   const tagsHtml = Object.keys(tagCount).length ? Object.entries(tagCount).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="badge">${escapeHtml(k)} ${v}</span>`).join(' ') : '<span class="muted">无</span>';
+  const projHtml = Object.keys(projCount).length ? Object.entries(projCount).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="badge b-proj">${escapeHtml(k)} ${v}</span>`).join(' ') : '<span class="muted">无</span>';
   $('stats-box').innerHTML = `
     <div class="stat-card"><h3>总数 ${total}</h3>
       <p>完成率：<b>${rate}%</b>（已完成 ${done} / 总数 ${total}）</p>
       ${bar('待办', byStatus.todo, total)}${bar('进行中', byStatus.in_progress, total)}${bar('已完成', done, total)}</div>
     <div class="stat-card"><h3>优先级分布</h3>${bar('高', byPri[1], total)}${bar('中', byPri[2], total)}${bar('低', byPri[3], total)}</div>
+    <div class="stat-card"><h3>体量（规模）分布</h3>${bar('大', byScale[3], total)}${bar('中', byScale[2], total)}${bar('小', byScale[1], total)}</div>
+    <div class="stat-card"><h3>项目分布</h3><div>${projHtml}</div></div>
     <div class="stat-card"><h3>标签</h3><div>${tagsHtml}</div></div>`;
 }
 
@@ -437,9 +714,10 @@ function renderStats() {
 function loadTrash() {
   const box = $('trash-list');
   if (!TRASH.length) { box.innerHTML = '<p class="muted">回收站为空。</p>'; return; }
-  box.innerHTML = TRASH.map(t => `<div class="item">
+  box.innerHTML = TRASH.map(t => `<div class="item pri-${t.priority}">
     <div class="title"><b>${escapeHtml(t.title)}</b></div>
-    <div class="meta"><span class="badge">${STATUS[t.status] || t.status}</span>${t.due ? '⏰ ' + escapeHtml(t.due) : ''}</div>
+    ${t.note ? `<div class="desc">${escapeHtml(t.note)}</div>` : ''}
+    <div class="meta"><span class="badge">${STATUS[t.status] || t.status}</span>${t.due ? `<span class="badge b-time">${escapeHtml(t.due)}</span>` : ''}${t.location ? `<span class="badge b-loc">◎ ${escapeHtml(t.location)}</span>` : ''}${t.project ? `<span class="badge b-proj">${escapeHtml(t.project)}</span>` : ''}</div>
     <div class="actions"><button onclick="doRestore('${t.id}')">恢复</button><button onclick="purgeTodo('${t.id}')">彻底删除</button></div></div>`).join('');
   loadState();
 }
@@ -453,10 +731,13 @@ $('add-form').addEventListener('submit', (e) => {
   addTodo({
     title: $('f-title').value, due: $('f-due').value || null,
     priority: parseInt($('f-priority').value, 10),
+    scale: parseInt($('f-scale').value, 10),
+    project: $('f-project').value.trim(),
+    location: $('f-location').value.trim(),
     tags: $('f-tags').value, note: $('f-note').value,
     reminder: $('f-reminder').checked, reminder_offset: parseInt($('f-offset').value, 10) || 0
   });
-  e.target.reset(); $('f-priority').value = '2';
+  e.target.reset(); $('f-priority').value = '2'; $('f-scale').value = '2';
   renderTodos(); loadState();
 });
 
@@ -481,7 +762,7 @@ async function aiChat(messages) {
   return j.choices[0].message.content;
 }
 async function aiSmartAdd(text) {
-  const sys = '你是一个日程助手。请把用户的自然语言描述解析成一个日程项，只输出一段 JSON（不要解释、不要代码块标记），字段：title(字符串必填)、due(如 2026-10-31 18:00 或 null)、priority(1高/2中/3低，默认2)、tags(数组)、note(字符串)、reminder(布尔)、reminder_offset(整数分钟，默认0)';
+  const sys = '你是一个日程助手。请把用户的自然语言描述解析成一个日程项，只输出一段 JSON（不要解释、不要代码块标记），字段：title(字符串必填)、due(如 2026-10-31 18:00 或 null)、priority(1高/2中/3低，默认2)、scale(1小/2中/3大，默认2)、project(字符串或空)、location(字符串或空)、tags(数组)、note(字符串)、reminder(布尔)、reminder_offset(整数分钟，默认0)';
   const out = await aiChat([{ role: 'system', content: sys }, { role: 'user', content: text }]);
   return extractJson(out);
 }
@@ -539,6 +820,11 @@ function loadSettings() {
   $('s-api-key').value = CONFIG.api_key || '';
   $('s-model').value = CONFIG.model || '';
   $('s-proxy').value = CONFIG.proxy || '';
+  updateAgentLock();
+}
+function updateAgentLock() {
+  const b = $('agent-organize'); if (!b) return;
+  b.textContent = CONFIG.api_key ? '🤖 批量整理（AI 已就绪）' : '🔒 批量整理（需配置 AI）';
 }
 $('settings-form').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -548,11 +834,46 @@ $('settings-form').addEventListener('submit', (e) => {
   CONFIG.proxy = $('s-proxy').value.trim();
   saveCfg();
   $('settings-msg').textContent = '✅ 设置已保存' + (CONFIG.proxy ? '（已启用代理转发）' : '');
+  updateAgentLock();
 });
 $('test-btn').onclick = async () => {
   const msg = $('settings-msg'); msg.textContent = '测试中…';
   try { const r = await aiChat([{ role: 'user', content: '你好，只回复“连接成功”' }]); msg.textContent = '✅ 连接成功，模型返回：' + r.slice(0, 60); }
   catch (e) { msg.textContent = '❌ 连接失败：' + (e.message || e); }
+};
+
+// ===================== 日程 Agent（智能批量整理） =====================
+$('agent-organize').onclick = async () => {
+  const out = $('agent-result');
+  if (!CONFIG.api_key) { out.textContent = '请先在「设置」中配置 API Key 后使用 Agent。'; switchTo('settings'); return; }
+  if (!TODOS.length) { out.textContent = '当前没有可用日程，先添加一些吧。'; return; }
+  out.textContent = '🤖 Agent 正在分析全部日程…';
+  const data = TODOS.map(t => ({ id: t.id, title: t.title, due: t.due, status: t.status, priority: t.priority, scale: t.scale, project: t.project, location: t.location, tags: t.tags, note: t.note }));
+  const sys = '你是日程管理 Agent。分析给定 JSON 日程数组，输出优化建议，只输出一段 JSON（不要解释、不要代码块标记）：{"suggestions":[{"id":字符串,"priority":1或2或3,"status":"待办"或"进行中"或"已完成","reason":字符串}],"merge":[{"keep":字符串,"remove":字符串,"reason":字符串}]}。';
+  try {
+    const r = await aiChat([{ role: 'system', content: sys }, { role: 'user', content: JSON.stringify(data) }]);
+    const j = extractJson(r);
+    if (!j) { out.textContent = 'Agent 未返回有效建议，请重试。'; return; }
+    let plan = '📋 Agent 优化方案：\n';
+    (j.suggestions || []).forEach(s => { plan += `· 优先级${s.priority}/状态${s.status} ← ${s.id}（${s.reason || ''}）\n`; });
+    (j.merge || []).forEach(m => { plan += `· 合并：删除 ${m.remove}，并入 ${m.keep}（${m.reason || ''}）\n`; });
+    plan += '\n（点击下方「应用方案」执行）';
+    out.textContent = plan;
+    $('agent-apply').dataset.plan = JSON.stringify(j);
+    $('agent-apply').style.display = 'inline-block';
+  } catch (e) { out.textContent = 'Agent 调用失败：' + (e.message || e); }
+};
+$('agent-apply').onclick = () => {
+  const j = JSON.parse($('agent-apply').dataset.plan || '{}');
+  const map = { '待办': 'todo', '进行中': 'in_progress', '已完成': 'done' };
+  (j.suggestions || []).forEach(s => {
+    const t = findTodo(s.id); if (!t) return;
+    updateTodo(s.id, { priority: s.priority, status: map[s.status] || t.status });
+  });
+  (j.merge || []).forEach(m => { if (findTodo(m.keep) && findTodo(m.remove)) softDelete(m.remove); });
+  $('agent-result').textContent = '✅ 已应用 Agent 方案';
+  $('agent-apply').style.display = 'none';
+  renderTodos(); loadState(); renderBoard();
 };
 
 // ===================== 导入 / 导出 =====================
@@ -577,6 +898,8 @@ function exportIcal() {
     lines.push('DTSTAMP:' + fmtLocal(new Date()));
     lines.push('DTSTART:' + fmtLocal(dt));
     lines.push('SUMMARY:' + icalEsc(t.title || ''));
+    if (t.project) lines.push('CATEGORIES:' + icalEsc(t.project));
+    if (t.location) lines.push('LOCATION:' + icalEsc(t.location));
     if (t.note) lines.push('DESCRIPTION:' + icalEsc(t.note));
     if (t.reminder && t.reminder_offset) {
       lines.push('BEGIN:VALARM');
@@ -624,7 +947,7 @@ $('file-input').addEventListener('change', async (e) => {
     } else {
       const txt = await file.text();
       if (CONFIG.api_key) {
-        const out = await aiChat([{ role: 'system', content: '从下面的文本中提取所有日程/待办事项，输出 JSON 数组，每项含 title,due(或null),priority(1/2/3),tags,note,reminder,reminder_offset。只输出 JSON 数组。' }, { role: 'user', content: txt }]);
+        const out = await aiChat([{ role: 'system', content: '从下面的文本中提取所有日程/待办事项，输出 JSON 数组，每项含 title,due(或null),priority(1/2/3),scale(1/2/3),project,location,tags,note,reminder,reminder_offset。只输出 JSON 数组。' }, { role: 'user', content: txt }]);
         const arr = extractJson(out) || JSON.parse(out);
         let n = 0; (Array.isArray(arr) ? arr : []).forEach(it => { if (it && it.title) { addTodo(it); n++; } });
         msg.textContent = `✅ AI 已从《${file.name}》解析并导入 ${n} 条日程`;
@@ -637,6 +960,55 @@ $('file-input').addEventListener('change', async (e) => {
   } catch (e) { msg.textContent = '❌ 解析失败：' + (e.message || e); }
   e.target.value = '';
 });
+
+// 导出本周日程长图（Canvas PNG）
+function exportWeekImage() {
+  try {
+    const now = new Date(); const day = (now.getDay() + 6) % 7;
+    const monday = new Date(now); monday.setHours(0, 0, 0, 0); monday.setDate(now.getDate() - day);
+    const days = []; for (let i = 0; i < 7; i++) { const d = new Date(monday); d.setDate(monday.getDate() + i); days.push(d); }
+    const items = days.map(d => {
+      const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      return { key, list: TODOS.filter(t => t.due && t.due.startsWith(key)).sort((a, b) => (a.due || '').localeCompare(b.due || '')) };
+    });
+    const W = 820; let y = 90; const lineH = 26, dayHead = 30;
+    items.forEach(it => { y += dayHead + it.list.length * lineH + 8; });
+    const H = Math.max(420, y + 30);
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#13131f'); g.addColorStop(1, '#0b0b12');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#cdbfff'; ctx.font = 'bold 26px sans-serif';
+    ctx.fillText('本周日程  ' + (days[0].getMonth() + 1) + '/' + days[0].getDate() + ' - ' + (days[6].getMonth() + 1) + '/' + days[6].getDate(), 30, 48);
+    let yy = 88; const wk = ['一', '二', '三', '四', '五', '六', '日'];
+    items.forEach((it, i) => {
+      ctx.fillStyle = '#a78bfa'; ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('周' + wk[i] + '  ' + (days[i].getMonth() + 1) + '/' + days[i].getDate(), 30, yy); yy += dayHead;
+      if (!it.list.length) { ctx.fillStyle = '#6b6480'; ctx.font = '15px sans-serif'; ctx.fillText('（无日程）', 54, yy); yy += lineH; }
+      it.list.forEach(t => {
+        ctx.font = '16px sans-serif';
+        const col = t.priority === 1 ? '#ff6b8b' : t.priority === 3 ? '#56d6a0' : '#ffb454';
+        ctx.fillStyle = col; ctx.fillText('●', 54, yy);
+        ctx.fillStyle = '#eef0f6';
+        const txt = (t.due ? t.due.slice(11) + '  ' : '') + t.title + (t.project ? '  #' + t.project : '') + (t.status === 'done' ? '  ✓' : '');
+        ctx.fillText(txt, 78, yy); yy += lineH;
+      });
+      yy += 8;
+    });
+    const url = c.toDataURL('image/png');
+    const a = document.createElement('a'); a.href = url; a.download = '本周日程.png'; a.click();
+    showToast('✅ 已导出本周日程长图');
+  } catch (e) { showToast('导出图片失败：' + (e.message || e)); }
+}
+
+// 边栏动作
+$('btn-new').onclick = () => { switchTo('todos'); setTimeout(() => { if ($('f-title')) $('f-title').focus(); }, 60); };
+$('banner-new').onclick = () => { switchTo('todos'); setTimeout(() => { if ($('f-title')) $('f-title').focus(); }, 60); };
+$('btn-import').onclick = () => $('file-input').click();
+$('btn-json').onclick = exportJson;
+$('btn-ical').onclick = exportIcal;
+$('btn-week').onclick = exportWeekImage;
+$('batch-btn').onclick = () => switchTo('agent');
 
 // ===================== 主题 =====================
 function applyTheme(th) {
@@ -651,6 +1023,12 @@ function showToast(text) {
   const t = $('toast'); t.textContent = text; t.classList.add('show');
   clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove('show'), 4000);
 }
+function updateNotifyDot() {
+  const dot = $('notify-dot'); if (!dot) return;
+  const p = ('Notification' in window) ? Notification.permission : 'denied';
+  dot.style.display = (p === 'granted') ? 'inline-block' : 'none';
+  const btn = $('notify-btn'); if (btn) btn.classList.toggle('on', p === 'granted');
+}
 async function sendNotification(title, body) {
   try {
     if ('Notification' in window && Notification.permission === 'granted') { new Notification(title, { body }); return; }
@@ -662,54 +1040,8 @@ $('notify-btn').onclick = async () => {
   let perm = 'default';
   try { perm = await Notification.requestPermission(); } catch (e) {}
   if (perm === 'granted') showToast('✅ 通知已启用，到点会提醒你');
-  else showToast('⚠️ 系统通知未授权，已启用页面内提醒（手机建议把网页“添加到主屏幕”后用 https 访问）');
-};
-
-// ===================== 添加到主屏幕 / 安装 =====================
-const SVG_ICON = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='42' fill='#2d6cdf'/><rect x='48' y='60' width='96' height='84' rx='10' fill='none' stroke='white' stroke-width='10'/><line x1='48' y1='88' x2='144' y2='88' stroke='white' stroke-width='10'/><line x1='74' y1='42' x2='74' y2='68' stroke='white' stroke-width='10' stroke-linecap='round'/><line x1='118' y1='42' x2='118' y2='68' stroke='white' stroke-width='10' stroke-linecap='round'/></svg>";
-(function injectManifest() {
-  try {
-    const manifest = {
-      name: '智能日程助手', short_name: '日程助手', description: '本地智能日程助手',
-      start_url: '.', scope: '.', display: 'standalone',
-      background_color: '#f4f6fb', theme_color: '#2d6cdf',
-      icons: [{ src: 'data:image/svg+xml,' + encodeURIComponent(SVG_ICON), sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
-    };
-    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-    const link = document.createElement('link'); link.rel = 'manifest'; link.href = URL.createObjectURL(blob);
-    document.head.appendChild(link);
-    const al = document.createElement('link'); al.rel = 'apple-touch-icon'; al.href = 'data:image/svg+xml,' + encodeURIComponent(SVG_ICON);
-    document.head.appendChild(al);
-  } catch (e) {}
-})();
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; $('install-btn').textContent = '安装到桌面'; });
-window.addEventListener('appinstalled', () => { deferredPrompt = null; $('install-btn').style.display = 'none'; showToast('✅ 已安装到桌面'); });
-function openInstallGuide() {
-  const t = $('install-guide-text');
-  const isLocal = location.protocol === 'file:';
-  const isLAN = /^https?:\/\/(192\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.href);
-  if (isLocal) {
-    t.innerHTML = '当前是手机<b>本地文件</b>，自带浏览器不允许直接加到桌面。请：<br>① 手机装 <b>Chrome</b>；<br>② 文件管理找到 index.html → 选「用 Chrome 打开」；<br>③ Chrome 右上角 ⋮ → <b>添加到主屏幕</b>。这样离线也能用。';
-  } else if (isLAN) {
-    t.innerHTML = '当前是电脑<b>局域网地址</b>，自带浏览器可能禁用添加。请：<br>① 手机用 <b>Chrome</b> 打开同一地址（' + location.host + '）；<br>② 右上角 ⋮ → <b>添加到主屏幕</b>。<br>注意：此方式需电脑保持开机运行。';
-  } else {
-    t.innerHTML = '请使用浏览器菜单的「添加到主屏幕 / 添加到桌面」，或用 Chrome 打开本页后点 ⋮ → 添加到主屏幕。';
-  }
-  $('install-modal').style.display = 'flex';
-}
-$('install-btn').onclick = async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    try { await deferredPrompt.userChoice; } catch (e) {}
-    deferredPrompt = null; $('install-btn').style.display = 'none';
-  } else { openInstallGuide(); }
-};
-$('install-close-btn').onclick = () => { $('install-modal').style.display = 'none'; };
-$('copy-link-btn').onclick = async () => {
-  try { await navigator.clipboard.writeText(location.href); showToast('✅ 链接已复制，去 Chrome 粘贴打开'); }
-  catch (e) { showToast('复制失败，请手动复制地址栏：' + location.href); }
-  $('install-modal').style.display = 'none';
+  else showToast('⚠️ 系统通知未授权，已启用页面内提醒（建议用 https 地址访问以解锁系统通知）');
+  updateNotifyDot();
 };
 
 // 到点提醒轮询
@@ -730,7 +1062,7 @@ function checkReminders() {
 // ===================== 启动 =====================
 (function init() {
   try { applyTheme(localStorage.getItem(LS_THEME) || 'standard'); } catch (e) {}
-  loadAll(); loadSettings(); loadState(); renderTodos();
+  loadAll(); loadSettings(); loadState(); renderTodos(); updateNotifyDot();
   checkReminders(); setInterval(checkReminders, 30000);
 })();
 </script>
