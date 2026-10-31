@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="standard">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a14">
+<meta name="description" content="智能日程助手 · 本地优先、AI 增强的日程与待办管理">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>智能日程助手</title>
+<style>
+/*__FONT__*/
+/*__CSS__*/
+</style>
+</head>
+<body class="theme-standard">
+<div id="boot-loading" class="boot-loading">
+  <span class="spinner" style="width:26px;height:26px;border-width:3px"></span>
+  <b>正在加载智能日程助手…</b>
+  <p>首次打开约 5 MB，请稍等片刻</p>
+</div>
+<div id="app" class="app">
+  <aside id="sidebar" class="sidebar"></aside>
+  <main class="main">
+    <div id="mobile-brand" class="mobile-brand"></div>
+    <div id="senior-guide"></div>
+    <div id="banner"></div>
+    <div id="toolbar"></div>
+    <div id="view-root"></div>
+  </main>
+  <nav id="mobile-nav" class="mobile-nav"></nav>
+  <button id="fab" class="fab" type="button" aria-label="新建日程">+</button>
+</div>
+
+<div id="batch-bar"></div>
+<div id="theme-pop"></div>
+<div id="modal-root"></div>
+<div id="toast" class="toast" role="status"></div>
+<div id="boot-error" style="display:none;position:fixed;inset:0;z-index:9999;background:#0a0a14;color:#fff;padding:24px;font:14px/1.7 system-ui,sans-serif;overflow:auto"></div>
+
+<div id="alarm" class="alarm-overlay" hidden>
+  <div class="alarm-card" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title">
+    <div class="alarm-icon">⏰</div>
+    <h2 id="alarm-title">日程提醒</h2>
+    <p id="alarm-body"></p>
+    <div class="alarm-actions">
+      <button class="btn btn-ghost" id="alarm-snooze" type="button">稍后 5 分钟</button>
+      <button class="btn btn-primary" id="alarm-ok" type="button">知道了</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="global-file" hidden>
+
+<script>
+(function () {
+  function show(msg) {
+    var d = document.getElementById('boot-error');
+    if (!d) return;
+    d.style.display = 'block';
+    d.innerHTML = '<div style="max-width:520px;margin:12vh auto 0"><b style="font-size:18px">应用加载失败</b><p style="opacity:.8;margin:10px 0">' + String(msg || '未知错误').replace(/</g, '&lt;') + '</p><p style="opacity:.6;font-size:12px">如果一直停在这里，请确认使用的是最新 index.html；数据仍保存在浏览器本地。</p><button onclick="location.reload()" style="margin-top:8px;padding:8px 14px;border-radius:8px;border:1px solid #fff;background:transparent;color:#fff">重新加载</button></div>';
+  }
+  window.__showBootError = show;
+  window.addEventListener('error', function (e) { if (!window.__BOOTED__ && e && e.message) show('脚本错误：' + e.message); });
+  setTimeout(function () { if (!window.__BOOTED__) show('加载超时：可能是网络较慢，或浏览器把内联脚本截断了。请刷新重试。'); }, 20000);
+})();
+</script>
+
+<!-- 应用代码先执行，5MB 的图片/PDF/Office 解析库放在后面，避免手机等整包下载才渲染 -->
+<script>/*__ICONS__*/</script>
+<script>/*__APP__*/</script>
+
+<script type="text/plain" id="lib-xlsx">/*__XLSX__*/</script>
+<script type="text/plain" id="lib-mammoth">/*__MAMMOTH__*/</script>
+<script type="application/json" id="assets-json">/*__ASSETS_JSON__*/</script>
+<script type="text/plain" id="pdf-data">/*__PDF__*/</script>
+</body>
+</html>

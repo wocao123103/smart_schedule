@@ -1180,7 +1180,7 @@ function renderSidebar() {
       <span class="brand-icon">${icon('brain', 22)}</span>
       <div class="grow">
         <h1 class="aurora-text">智能日程助手</h1>
-        <p>AI 驱动的日程管理 · v2.1.0</p>
+        <p>AI 驱动的日程管理 · v2.1.1</p>
       </div>
     </div>
     <div class="theme-wrap">
@@ -1735,7 +1735,7 @@ function renderSettings() {
     <div class="drawer-head"><div class="flex-center"><span class="brand-icon" style="width:36px;height:36px;border-radius:11px;background:var(--surface-2);box-shadow:none;color:var(--cyan)">${icon('settings', 18)}</span><div><h2>设置</h2><p class="hint" style="margin:3px 0 0">大模型 · 周历 · 提醒 · 外观 · 导出</p></div></div><button class="icon-btn" data-act="close-modal" aria-label="关闭">${icon('x', 17)}</button></div>
     <div class="drawer-tabs">${tabs.map(([k, label, ic]) => `<button class="pill ${tab === k ? 'active' : ''}" data-act="settings-tab" data-tab="${k}">${icon(ic, 13)} ${label}</button>`).join('')}</div>
     <div class="drawer-body">${body}</div>
-    <div class="drawer-foot">密钥只保存在本机浏览器 · 数据不上传服务器 · v2.1.0</div>
+    <div class="drawer-foot">密钥只保存在本机浏览器 · 数据不上传服务器 · v2.1.1</div>
   </div></div>`;
 }
 function renderSettingsAI() {
@@ -1797,7 +1797,7 @@ function renderSettingsExport() {
     <button class="btn btn-ghost btn-sm" style="width:100%" data-act="export-ical">${icon('calendar', 12)} 导入手机日历（.ics）</button>
   </div>
   <div class="setting-item"><h4>${icon('upload', 13)} 导入</h4><p>支持 JSON、CSV、TXT、Markdown、Word、Excel；图片可走 AI 视觉识别。</p><button class="btn btn-primary btn-sm" data-act="open-import">${icon('upload', 12)} 打开导入</button></div>
-  <div class="info-box">数据 ${state.todos.length} 条 · 版本 v2.1.0 · 图片/PDF/Office 解析库按需加载</div>`;
+  <div class="info-box">数据 ${state.todos.length} 条 · 版本 v2.1.1 · 图片/PDF/Office 解析库按需加载</div>`;
 }
 function renderSettingsHelp() {
   const shots = getAssets().tutorial || [];
@@ -2044,15 +2044,19 @@ function renderAIPanel() {
   </div></div>`;
 }
 function aiStatusBadge() {
-  return state.ai.engine === 'openai' ? `<span class="chip lime">AI 模型</span>` : `<span class="chip">本地兜底</span>`;
+  if (state.ai.engine === 'openai') return `<span class="chip lime">AI 模型</span>`;
+  if (state.ai.engine === 'file') return `<span class="chip cyan">文件解析</span>`;
+  return `<span class="chip">本地兜底</span>`;
 }
 function renderAIExtract() {
   const ai = state.ai;
   return `<div class="ai-tab-body">
     <div class="form-field"><label>用一句话描述，AI 会拆成结构化日程</label><textarea class="input" data-ai="text" rows="3" placeholder="例如：明天下午3点开会，高优先级；周五前交高数作业">${esc(ai.text)}</textarea></div>
     <div class="row wrap"><button class="btn btn-primary btn-sm" data-act="ai-parse">${icon('wand-2', 14)} 解析</button>
+      <button class="btn btn-ghost btn-sm" data-act="ai-file">${icon('upload', 13)} 从文件填入</button>
       <button class="btn btn-ghost btn-sm" data-act="ai-image">${icon('image', 13)} 截图识别</button>
-      <span class="hint">${aiReady() ? '将调用已配置模型' : '未配置 Key 时走本地逐行解析'}</span></div>
+      <span class="hint">${aiReady() ? '将调用已配置模型' : '未配置 Key 时走本地解析'}</span></div>
+    <p class="hint" style="margin:7px 0 0">支持 Word / Excel / TXT / Markdown / CSV / JSON / 图片；选择后会自动填入并解析。</p>
     ${ai.busy ? `<div class="info-box"><span class="spinner"></span> 解析中…</div>` : ''}
     ${ai.error ? `<div class="error-box">${esc(ai.error)}<br><button class="btn btn-primary btn-xs" data-act="open-settings" style="margin-top:6px">去设置 / 测试连接</button></div>` : ''}
     ${ai.parsed.length ? `<div class="flex-between"><b style="font-size:12px">解析结果 ${ai.parsed.length} 条</b>${aiStatusBadge()}</div>
@@ -2125,6 +2129,87 @@ async function doAIImage() {
     } catch (e) { state.ai.error = e.message || String(e); }
     state.ai.busy = false; renderModal();
   });
+}
+function doAIFile() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.txt,.md,.markdown,.csv,.tsv,.json,.docx,.xlsx,.xls,.png,.jpg,.jpeg,.webp,.gif';
+  inp.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0';
+  inp.onchange = () => {
+    const f = inp.files && inp.files[0];
+    setTimeout(() => inp.remove(), 0);
+    if (f) fillAIFromFile(f);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+}
+async function fillAIFromFile(file) {
+  const ai = state.ai;
+  ai.busy = true; ai.error = ''; ai.parsed = []; ai.engine = ''; ai.fileName = file.name; renderModal();
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  try {
+    if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) {
+      if (!aiReady()) throw new Error('图片识别需要先在设置里配置支持视觉的模型（如 gpt-4o / qwen-vl-max / glm-4v-plus）');
+      const dataUrl = await fileToDataURL(file);
+      const out = await callAI([
+        { role: 'system', content: '你是日程识别助手。识别图片中的课程表/通知/待办，只输出 JSON 数组，字段 title, dueDate(YYYY-MM-DD|null), dueTime(HH:mm|null), endTime, location, priority(1-5), tags(数组), notes。' },
+        { role: 'user', content: [{ type: 'text', text: '提取图片中的所有日程' }, { type: 'image_url', image_url: { url: dataUrl } }] }
+      ], { maxTokens: 1800 });
+      const items = itemsFromJson(parseJsonLoose(out)).map(x => normalizeTodoInput(Object.assign({}, x, { source: 'ai' }))).filter(x => x.title);
+      if (!items.length) throw new Error('图片中没有识别出日程');
+      ai.parsed = items.map(x => Object.assign({}, x, { _pick: true }));
+      ai.engine = 'openai';
+    } else if (ext === 'json') {
+      const text = await readFileText(file);
+      const arr = itemsFromJson(parseJsonLoose(text)).map(normalizeImported).filter(Boolean);
+      if (!arr.length) throw new Error('JSON 中没有解析出日程');
+      ai.text = text.slice(0, 4000);
+      ai.parsed = arr.map(x => Object.assign({}, x, { _pick: true }));
+      ai.engine = 'file';
+    } else if (ext === 'csv' || ext === 'tsv') {
+      const text = await readFileText(file);
+      const arr = csvItems(text, ext === 'tsv' ? '\t' : null);
+      if (!arr.length) throw new Error('表格中没有解析出日程');
+      ai.text = text.slice(0, 4000);
+      ai.parsed = arr.map(x => Object.assign({}, x, { _pick: true }));
+      ai.engine = 'file';
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      const XLSXLib = await ensureLib('lib-xlsx', 'XLSX');
+      const buf = await readFileBuffer(file);
+      const wb = XLSXLib.read(new Uint8Array(buf), { type: 'array', cellDates: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSXLib.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
+      const arr = rowsToItems(rows);
+      if (!arr.length) throw new Error('Excel 中没有解析出日程');
+      ai.text = rows.slice(0, 30).map(r => r.join('\t')).join('\n').slice(0, 4000);
+      ai.parsed = arr.map(x => Object.assign({}, x, { _pick: true }));
+      ai.engine = 'file';
+    } else if (ext === 'docx') {
+      const mammothLib = await ensureLib('lib-mammoth', 'mammoth');
+      const buf = await readFileBuffer(file);
+      const res = await mammothLib.extractRawText({ arrayBuffer: buf });
+      const text = String((res && res.value) || '').trim();
+      if (!text) throw new Error('Word 中没有提取到文字');
+      ai.text = text.slice(0, 12000);
+      ai.busy = false; renderModal();
+      await doAIParse();
+      return;
+    } else if (['txt', 'md', 'markdown'].includes(ext)) {
+      const text = (await readFileText(file)).trim();
+      if (!text) throw new Error('文件是空的');
+      ai.text = text.slice(0, 12000);
+      ai.busy = false; renderModal();
+      await doAIParse();
+      return;
+    } else {
+      throw new Error('暂不支持 .' + (ext || '未知') + ' 文件；请选择 Word / Excel / TXT / Markdown / CSV / JSON / 图片');
+    }
+    if (!ai.parsed.length) throw new Error('没有解析出有效日程');
+    toast('已读取 ' + file.name + '，解析出 ' + ai.parsed.length + ' 条');
+  } catch (e) {
+    ai.error = '读取文件失败：' + (e.message || e);
+  }
+  ai.busy = false; renderModal();
 }
 function doAIAdd() {
   const items = state.ai.parsed.filter(x => x._pick).map(x => { const y = Object.assign({}, x); delete y._pick; return y; });
@@ -2448,6 +2533,7 @@ document.addEventListener('click', (e) => {
   const act = el.dataset.act;
   if (act === 'ai-tab') { state.aiTab = el.dataset.tab; state.ai.error = ''; renderModal(); return; }
   if (act === 'ai-parse') { doAIParse(); return; }
+  if (act === 'ai-file') { doAIFile(); return; }
   if (act === 'ai-image') { doAIImage(); return; }
   if (act === 'ai-add') { doAIAdd(); return; }
   if (act === 'ai-prioritize') { doAIPrioritize(); return; }
