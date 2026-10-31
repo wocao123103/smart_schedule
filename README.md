@@ -1,196 +1,210 @@
-# 智能日程助手 · 网页版源码（v2.1.1）
+# 智能日程助手 · 网页版（v2.1.1）
 
-这是单文件网页版的**可维护源码**，不是压缩后的 `index.html`。
+> 按桌面版「智能日程助手」源码包 / 安装包 / 开发 Skill 重做的**单文件网页版**。
+> 四视图、1–5 优先级、截止事项、四套主题、设置抽屉、批量管理、自动规则、AI 助手、简易 Agent、Word/Excel/图片导入、通知与全屏闹钟，全部收在一个 `index.html` 里。
 
-- 源码目录：`智能日程助手网页版-源码/`
-- 构建产物：`dist/index.html`（约 **5.47 MB**）
-- 构建依赖：Python 3.9+，只用标准库，**不需要 npm / pip**
-- 应用：纯 HTML + CSS + 原生 JS，无前端框架
+👉 **在线地址：** <https://wocao123103.github.io/smart_schedule/>
+
+- 主文件 `index.html`：约 **5.5 MB**（在要求的 5–10 MB 区间内）
+- 纯前端，数据保存在浏览器 `localStorage`，不上传服务器
+- 除 AI 调用外，断网也能使用
 
 ---
 
-## 一、快速构建
+## 一、这次复刻了什么
 
-```bash
-cd 智能日程助手网页版-源码
-python build.py
+### 1. 界面 / 交互
+
+- 左侧 240px 侧边栏：Logo、主题切换、列表/日历/看板/统计/垃圾箱、底部新建 / Agent / AI / 导入 / 设置 / JSON / 日历 / 本周长图
+- 移动端：顶部品牌栏 + 主题/设置/Agent/AI + 底部 5 标签 + 悬浮「＋」，接近桌面版的手机布局
+- 深色极光「标准版」，以及**青少年版 / 老年版 / 二次元版**三套浅色主题（贴纸卡片、大字号高对比、星屑背景）
+- 卡片：优先级 1–5 色标（1 绿 / 2 蓝 / 3 黄 / 4 紫 / 5 红）、状态、日期时间、地点、标签、免打扰、子任务、AI 来源、悬停编辑/删除
+- 四视图：
+  - 列表：双列卡片、空状态、搜索无结果状态
+  - 日历：月视图、教学周、优先级圆点、截止事项跨天铺满、选中日卡片 + 「这天加一条」
+  - 看板：待办 / 进行中 / 已完成三列
+  - 统计：总计 / 已完成 / 进行中 / 逾期、完成率圆环、5 级优先级分布、高频标签
+- 垃圾箱：恢复 / 永久删除 / 清空二次确认
+- 批量管理：勾选、全选当前筛选结果、二次确认删除、底部悬浮工具条
+- 搜索：输入 260ms 防抖 + 回车/按钮 + 结果计数 + 清除 + 无结果空状态
+- 筛选：状态药丸、优先级（1–5）、标签、清除
+
+### 2. 日程数据模型
+
+对齐桌面版：
+
+`title / notes / priority(1–5) / status(todo·doing·done) / tags / dueDate / dueTime / endTime / startDate / isDeadline / location / muted / source / subtasks / trashedAt`
+
+- 新建 / 编辑弹窗：截止事项开关、开始日期、截止日期、截止时间、地点、备注、优先级 1–5、标签、免打扰、状态
+- 旧版网页数据自动迁移：`due` 拆成日期/时间、`in_progress → doing`、旧 1/2/3 优先级映射为新 1–5
+- 兼容桌面版的 `notes`、`done`、`trashedAt`、`isDeadline` 等字段
+
+### 3. 自动规则（本地确定性执行，不调模型）
+
+- 启动、每 60 秒、回到页面时执行
+- 逾期超过 **30 天**未完成 → 自动移入垃圾箱
+- 逾期超过 **5 天**未完成 → 自动标记为已完成
+- 标签含「课程」或内容含课程特征 → 按上课时间自动 `待办 → 进行中 → 已完成`（结束时间缺失按开始 +2 小时）
+- 导入识别为课程的数据：优先级设为 1，并自动补「课程」标签
+
+### 4. AI 助手（设置里填 Key，浏览器直连）
+
+- 服务商预设：OpenAI / DeepSeek / 通义千问 / Kimi / 智谱 GLM / 自定义
+- Base URL、API Key、模型、CORS 代理、测试连接、保存、清除密钥
+- 5 个页签：
+  - **智能添加**：一段话、截图，或直接上传 **Word / Excel / TXT / Markdown / CSV / JSON / 图片** → 自动填入并解析成多条日程，勾选后批量添加
+  - **智能排序**：按优先级 + 截止时间给建议顺序，一键应用
+  - **总结**：完成率、拖延项、下周重点
+  - **拆解**：把大任务拆成 3–6 个子步骤，创建为带子任务的日程
+  - **对话**：自由问答
+- 无 Key / 调用失败时走**本地兜底**，界面标注「本地兜底」，不会假装成功
+
+### 5. 简易 Agent（有界）
+
+- 入口：侧栏「日程 Agent」/ 手机顶部 Agent 按钮
+- 今日简报：今天任务、逾期项、未来 3 天压力（本地统计）
+- 指令输入 + 快捷示例 + `Ctrl/⌘ + Enter` 执行
+- 工具集：查询、统计、冲突检测、创建、更新、改状态、**删除只生成待确认清单**
+- 删除必须在面板里点「确认移入垃圾箱」；可撤销本次 Agent 改动
+- 执行轨迹：工具名、入参、摘要、耗时、估算 tokens、停止原因
+- 无 Key 时用本地规则；有 Key 时单次规划 + 最多 4 步执行，失败自动回退本地
+- 界面上限文案「有界 · 最多 6 步」
+
+### 6. 导入 / 导出
+
+> 手机上如果不方便从侧栏进入导入页，可直接在「AI 助手 → 智能添加」点「从文件填入」，选择 Word/Excel/TXT/CSV/JSON/图片即可。
+
+导入（先预览、勾选、确认后写入）：
+
+| 格式 | 能力 |
+|---|---|
+| JSON | 数组、`{todos:[...]}`、`{entries:[...]}`、`{items:[...]}`；旧版桌面字段自动转换 |
+| CSV / TSV | 表头、引号内逗号、BOM、GBK、日期/时间分列、`sep=,` |
+| TXT / Markdown | 每行一条、日期前缀、`@日期`、`- [ ]` / `- [x]`、`#标签`、`（高优先级）` |
+| Word (.docx) | 内置 mammoth：提取正文 → 本地逐行或 AI 结构化 |
+| Excel (.xlsx/.xls) | 内置 SheetJS：按表头映射标题/日期/时间/优先级/标签/备注/地点 |
+| 图片 | 配置视觉模型后走 AI 识别（gpt-4o / qwen-vl-max / glm-4v-plus 等） |
+
+- 去重：有 `id` 按 id 更新（重复导入不产生副本）；无 `id` 按「标题 + 日期 + 时间」跳过重复
+- 导入完成自动清空筛选、回到列表并提示新增/更新数
+
+导出：
+
+- 今天 / 本周 / 全部 PNG 长图（Canvas）
+- 本周 PDF（浏览器打印）
+- 应用 JSON（含全部字段）
+- `schedule-tracker` 日程库 `schedule.json`
+- 手机日历 `.ics`
+
+### 7. 提醒 / 通知
+
+- 普通日程：开始前 1 小时提醒
+- 截止事项：截止前 1 小时，另外在结束前 3 小时再提醒一次
+- 已完成、已删除、免打扰不提醒；没写具体时间不提醒
+- 系统通知优先（`sw.js` + Service Worker；安卓 Chrome 必需）
+- 不可用时自动退回**全屏闹钟 + 声音 + 震动 + 稍后 5 分钟**
+- 设置「提醒」页：总开关、权限自检、测试提醒、测试闹钟、规则说明
+
+### 8. 设置抽屉
+
+6 个页签：大模型接入 / 教学周历 / 提醒 / 外观 / 导出与分享 / 教程与关于
+
+- 教学周历：第 1 周周一 + 学期名称，日历自动显示「第 N 教学周」
+- 教程与关于：5 张图文教程、4 张主题预览、51 页《源码解析》PDF 下载
+
+### 9. 手机兼容修复（v2.1.1）
+
+- **真正原因：应用 JS 原先排在 5 MB 图片/PDF/解析库之后**，手机必须等整包下载/解析完才执行启动脚本；网慢或浏览器中断时就只剩背景和「＋」。现在把**应用脚本前置**，重资源全部后置，首屏约 250 KB 就能渲染，5 MB 资源在后台继续加载。
+- **移除「设置 → 手机访问」页签**：本应用本身就是手机优先布局，不再提供二维码/复制地址页。
+- **localStorage 被 WebView/隐私模式禁用时不再白屏**：所有读写都走安全封装，禁止时自动退回内存，页面照常显示。
+- **启动兜底**：`DOMContentLoaded` 已触发也能启动；1.5 秒后仍未启动会自动重试；脚本异常时显示可读错误，而不是整页空白。
+- **首屏加载提示**：5 MB 加载期间显示「正在加载」，不会再是纯空白。
+- **老旧内嵌浏览器兼容**：补 `padStart / includes / closest / Array.from / Object.assign` 等基础方法。
+- **窄屏适配**：390 / 360 / 320 px 实测无横向溢出；顶部品牌、操作按钮、筛选、卡片、底部导航按宽度收缩。
+- 仍然可以添加到手机主屏幕（浏览器菜单 → 添加到主屏幕），只是不再有单独的「手机访问」设置页。
+
+---
+
+## 二、为什么文件是 5.5 MB？
+
+不是填充，而是把桌面版配套资料与离线解析库一起内嵌：
+
+| 内容 | 作用 |
+|---|---|
+| 5 张图文教程截图（压缩 JPEG） | 设置 → 教程与关于，离线可看 |
+| 4 张主题预览（标准/青少年/老年/二次元） | 设置 → 教程与关于 |
+| 《智能日程助手-源码解析.pdf》51 页 | 一键下载 |
+| SheetJS（xlsx 解析） | 浏览器本地读 Excel，不上传 |
+| mammoth（docx 解析） | 浏览器本地读 Word |
+| Sora 字体子集 + 图标 | 界面排版与图标 |
+| 应用代码 | 全部 HTML/CSS/JS 内联 |
+
+最终 `index.html ≈ 5.5 MB`，满足 5–10 MB 要求；仍远低于 25 MB。
+
+---
+
+## 三、部署 / 更新 GitHub Pages
+
+仓库：<https://github.com/wocao123103/smart_schedule>
+
+需要上传到仓库**根目录**的文件：
+
+| 文件 | 作用 | 必须 |
+|---|---|---|
+| `index.html` | 应用本体（约 5.5 MB） | ✅ |
+| `sw.js` | 系统通知 + PWA | ✅ |
+| `manifest.webmanifest` | PWA 安装信息 | ✅ |
+| `icon-192.png` / `icon-512.png` / `apple-touch-icon.png` | 手机主屏图标 | ✅ |
+| `README.md` | 说明 | 可选 |
+| `.nojekyll` | 禁用 Jekyll | ✅ 建议 |
+
+步骤：
+
+1. 用新 `index.html` 覆盖仓库根目录同名文件；同时上传 `sw.js`、`manifest.webmanifest` 与三个图标
+2. 仓库 **Settings → Pages**：Source = `Deploy from a branch`，Branch = `main`，目录 = `/ (root)`
+3. 等约 1 分钟，手机/电脑强制刷新
+4. 侧栏 Logo 下方看到 **v2.0** 即新版生效
+5. 设置 → 提醒 → 允许桌面通知；安卓 Chrome 需 `sw.js` 才能系统通知
+
+> GitHub Pages 免费版单文件上限 100 MB，5.5 MB 可直接上传。
+
+---
+
+## 四、本地使用
+
+- 直接双击 `index.html`：全部功能可用；但 `file://` 下浏览器通常禁止系统通知，到点走全屏闹钟
+- 或运行 `python serve.py`（默认 8000），用手机访问 `http://电脑IP:8000`
+- 局域网 HTTP 不是安全上下文，安卓 Chrome 系统通知仍受限；正式通知请用 GitHub Pages 的 https
+
+## 五、数据与隐私
+
+- 日程：`localStorage.ss_todos_v2`
+- AI 配置（含 Key）：`localStorage.ss_cfg_v2`（只存本机浏览器）
+- 主题：`localStorage.ss_theme`
+- 教学周历：`localStorage.ss_settings_v2`
+- 提醒记录：`localStorage.ss_reminder_log_v2`
+- 清空浏览器站点数据会清空日程，请定期「导出 JSON」备份
+
+## 六、已知限制
+
+- 纯 Web 无法在浏览器完全关闭后定时提醒；页面在后台标签页可轮询。需要关浏览器也提醒时，用桌面 EXE / Android 原生 App。
+- 浏览器直连大模型可能遇到 CORS；可在设置里填 CORS 代理（`代理地址?url=`）。
+- 图片识别需要模型支持视觉；纯文本模型只做文本抽取。
+- Agent 为**简易版**：单次规划 + 最多 4 步，复杂多轮自主任务请用桌面版完整 Agent。
+- 导出 PDF 调用浏览器打印；不同浏览器分页可能略有差异。
+- 主题/字体/截图均内嵌，首次打开 5.5 MB 需要短暂加载。
+
+## 七、文件结构（网页版）
+
 ```
-
-构建成功后：
-
-```
-dist/
-├─ index.html               # 5.47 MB 单文件，可直接双击或上传
-├─ sw.js                    # 系统通知 / PWA
-├─ manifest.webmanifest
+智能日程助手网页版/
+├─ index.html               # 5.5 MB 单文件应用
+├─ sw.js                    # 系统通知 + PWA 空 fetch
+├─ manifest.webmanifest     # PWA
 ├─ icon-192.png
 ├─ icon-512.png
 ├─ apple-touch-icon.png
+├─ serve.py                 # 可选本地/局域网静态服务器
 ├─ .nojekyll
-├─ serve.py                 # 本地/局域网服务器
 └─ README.md
 ```
-
-本地预览：
-
-```bash
-cd dist
-python serve.py
-# 浏览器打开 http://127.0.0.1:8000/
-```
-
-部署：把 `dist/` 里的文件全部上传到 GitHub Pages 仓库根目录。
-
-> 如果只改了一个 JS 文件，重新执行 `python build.py` 即可；不要直接改 `dist/index.html`，它会被覆盖。
-
----
-
-## 二、目录说明
-
-```
-智能日程助手网页版-源码/
-├─ build.py                 # 构建脚本：拼装 + 内嵌资源
-├─ serve.py                 # 本地/局域网服务器
-├─ README.md
-├─ src/
-│  ├─ template.html         # HTML 外壳，含 __APP__ / __PDF__ 等占位符
-│  ├─ app.css               # 全部布局、四主题、移动端、弹窗样式
-│  └─ js/
-│     ├─ 01-core.js         # 工具、常量、state、localStorage、自动规则、主题
-│     ├─ 02-ui.js           # 侧栏/顶栏/搜索/四视图/卡片/批量/主题菜单
-│     ├─ 03-form-settings.js# 新建编辑弹窗、设置抽屉 6 页签
-│     ├─ 04-ai-agent.js     # AI 五页签、截图/文件识别、简易 Agent
-│     ├─ 05-import.js       # JSON/CSV/TXT/MD/Word/Excel/图片导入
-│     └─ 06-export-reminders.js # 导出、通知、闹钟、启动
-├─ assets/
-│  ├─ sora.woff2            # 字体子集
-│  ├─ tut-*.jpg             # 5 张教程截图
-│  ├─ th-*.jpg              # 4 张主题预览
-│  └─ 智能日程助手-源码解析.pdf
-├─ libs/
-│  ├─ xlsx.full.min.js      # SheetJS 0.18.5
-│  └─ mammoth.browser.min.js# mammoth 1.8.0
-├─ icons/                   # 58 个 Lucide SVG，构建时生成 ICONS
-├─ pwa/                     # sw.js / manifest / 图标 / .nojekyll
-└─ dist/                    # build.py 生成的部署目录（已附带一份）
-```
-
----
-
-## 三、加载架构（手机白屏修复的关键）
-
-`index.html` 不是简单的“样式 + 一个巨大脚本”，而是按下面的顺序：
-
-```html
-<style>CSS + 字体</style>
-<div id="boot-loading">正在加载…</div>
-<div id="app">外壳</div>
-
-<script>const ICONS = {...}</script>
-<script>应用代码（约 94 KB 开始，约 238 KB 结束）</script>
-
-<!-- 以下重资源在应用脚本之后，不阻塞首屏 -->
-<script type="text/plain" id="lib-xlsx">...</script>
-<script type="text/plain" id="lib-mammoth">...</script>
-<script type="application/json" id="assets-json">{教程/主题图片}</script>
-<script type="text/plain" id="pdf-data">...</script>
-```
-
-因此：
-
-- 手机只需要先拿到约 **240 KB**，界面就能渲染
-- 5 MB 图片/PDF/Office 解析库在后台继续加载
-- 教程图片在打开「教程与关于」时才 `JSON.parse`
-- Word/Excel 库在真正导入文件时才 `ensureLib()` 执行
-- PDF 在点击下载时才读取 `#pdf-data`
-
-对应代码：
-
-- `getAssets()` / `getPDFDataURI()` / `ensureLib()`：`src/js/01-core.js`
-- 应用先启动、隐藏 loading：`src/js/06-export-reminders.js` 的 `boot()`
-- 重资源占位符：`src/template.html` + `build.py`
-
-如果修改了加载顺序，请保持“应用脚本在 `lib-*` 之前”，否则手机可能再次白屏。
-
----
-
-## 四、常用改动位置
-
-| 想改什么 | 文件 |
-|---|---|
-| 侧栏、顶栏、搜索、卡片 | `src/js/02-ui.js` |
-| 新建/编辑日程表单 | `src/js/03-form-settings.js` |
-| 设置抽屉页签 | `src/js/03-form-settings.js` |
-| AI 五页签、文件/截图识别 | `src/js/04-ai-agent.js` |
-| 简易 Agent | `src/js/04-ai-agent.js` |
-| 导入 JSON/CSV/Word/Excel | `src/js/05-import.js` |
-| 导出 PNG/PDF/JSON/iCal | `src/js/06-export-reminders.js` |
-| 通知、全屏闹钟 | `src/js/06-export-reminders.js` |
-| 自动规则（30 天/5 天/课程） | `src/js/01-core.js` |
-| 颜色、四主题、手机断点 | `src/app.css` |
-| HTML 外壳 | `src/template.html` |
-| 教程/主题截图 | `assets/` + `build.py` |
-| PWA | `pwa/` |
-
-修改后执行：
-
-```bash
-python build.py
-```
-
----
-
-## 五、v2.1.1 重点改动
-
-### 1. 手机白屏修复
-
-- 应用脚本前置：首屏约 240 KB，不再等整包 5 MB
-- 重资源后置：Word/Excel 库、PDF、教程图片放到文档末尾
-- `localStorage` 安全封装：被 WebView/隐私模式禁用时退回内存
-- 启动兜底、加载提示、可读错误页
-- 老旧 WebView API 兼容补丁
-- 320 / 360 / 390 px 窄屏适配
-
-### 2. 设置精简
-
-- 移除「手机访问」页签、二维码、复制地址、qrcode 库
-- 设置现在 6 页签：大模型接入 / 教学周历 / 提醒 / 外观 / 导出与分享 / 教程与关于
-
-### 3. AI 智能添加支持文件
-
-「AI 助手 → 智能添加」新增 **从文件填入**：
-
-- Word `.docx`：mammoth 提取正文 → AI / 本地解析
-- Excel `.xlsx/.xls`：SheetJS 读取表格 → 表头映射成日程
-- TXT / Markdown：逐行 + 日期/标签/优先级解析
-- CSV / TSV：表头映射
-- JSON：数组、`{todos}`、`{entries}`、`{items}`
-- 图片：调用视觉模型识别（需配置 gpt-4o / qwen-vl-max / glm-4v-plus 等）
-
-选择文件后会自动填入并解析，勾选后点「添加选中项」。
-
----
-
-## 六、资源与体积
-
-`index.html` 约 **5.47 MB**，主要来自：
-
-- 51 页《源码解析》PDF
-- 5 张教程图 + 4 张主题预览
-- SheetJS + mammoth
-- Sora 字体子集
-- 58 个图标
-- 应用代码
-
-符合 5–10 MB 要求，同时通过“应用前置”保证手机首屏速度。
-
----
-
-## 七、说明
-
-- 这是纯静态前端，数据保存在浏览器 `localStorage`
-- AI 调用为浏览器直连模型；CORS 受限时在设置里填代理
-- 浏览器完全关闭后无法定时提醒；页面在后台标签页可提醒
-- 导出 PDF 使用浏览器打印
-- 图片识别需要支持视觉的模型
-- 教程图/PDF/字体等资源仅用于本应用展示，二次分发请确认相应授权
