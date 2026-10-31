@@ -864,6 +864,7 @@ function migrateTodo(raw) {
     dueTime: validTime(dueTime) ? dueTime : null,
     endTime: validTime(raw.endTime) ? raw.endTime : null,
     startDate: validDate(raw.startDate) ? raw.startDate : null,
+    startTime: validTime(raw.startTime) ? raw.startTime : null,
     isDeadline: !!raw.isDeadline,
     location: String(raw.location || ''),
     reminder: !!raw.reminder,
@@ -968,6 +969,7 @@ function normalizeTodoInput(input) {
     dueDate, dueTime,
     endTime: validTime(input.endTime) ? input.endTime : null,
     startDate: validDate(input.startDate) ? input.startDate : null,
+    startTime: validTime(input.startTime) ? input.startTime : null,
     isDeadline: !!input.isDeadline,
     location: String(input.location || '').trim(),
     reminder: input.reminder !== false,
@@ -1180,7 +1182,7 @@ function renderSidebar() {
       <span class="brand-icon">${icon('brain', 22)}</span>
       <div class="grow">
         <h1 class="aurora-text">智能日程助手</h1>
-        <p>AI 驱动的日程管理 · v2.1.1</p>
+        <p>AI 驱动的日程管理 · v2.2.0</p>
       </div>
     </div>
     <div class="theme-wrap">
@@ -1205,7 +1207,7 @@ function renderSidebar() {
       </button>
       <div class="side-mini">
         <button class="btn btn-ghost" data-act="export-json">${icon('download', 14)} JSON</button>
-        <button class="btn btn-ghost" data-act="export-ical">${icon('download', 14)} 日历</button>
+        <button class="btn btn-ghost" data-act="export-ical" data-open="1">${icon('download', 14)} 日历</button>
       </div>
       <button class="btn btn-ghost" data-act="export-image" data-range="week">${icon('download', 14)} 导出本周长图</button>
     </div>`;
@@ -1615,6 +1617,7 @@ function openTodoForm(todo, preset) {
     tags: t ? (t.tags || []).join(', ') : '',
     isDeadline: t ? !!t.isDeadline : !!(preset && preset.isDeadline),
     startDate: t ? (t.startDate || '') : '',
+    startTime: t ? (t.startTime || (t.isDeadline ? '09:00' : '')) : ((preset && preset.isDeadline) ? '09:00' : ''),
     dueDate: t ? (t.dueDate || '') : ((preset && preset.dueDate) || ''),
     dueTime: t ? (t.dueTime || '') : '',
     endTime: t ? (t.endTime || '') : '',
@@ -1644,9 +1647,10 @@ function renderTodoForm() {
         <div class="form-field"><label>备注</label><textarea class="input" data-form="notes" placeholder="选填，例如：携带习题册">${esc(f.notes)}</textarea></div>
         ${f.isDeadline ? `<div class="form-grid">
           <div class="form-field"><label>${icon('calendar', 12)} 开始日期（选填）</label><input class="input" type="date" data-form="startDate" value="${esc(f.startDate)}" max="${esc(f.dueDate)}"></div>
+          <div class="form-field"><label>${icon('clock', 12)} 开始时间（默认 09:00）</label><input class="input" type="time" data-form="startTime" value="${esc(f.startTime)}"></div>
           <div class="form-field"><label>${icon('calendar', 12)} 截止日期 <span class="bad">*</span></label><input class="input" type="date" data-form="dueDate" value="${esc(f.dueDate)}" min="${esc(f.startDate)}"></div>
           <div class="form-field"><label>${icon('clock', 12)} 截止时间</label><input class="input" type="time" data-form="dueTime" value="${esc(f.dueTime)}"></div>
-          <div class="form-field"><label>${icon('map-pin', 12)} 地点</label><input class="input" data-form="location" value="${esc(f.location)}" placeholder="例如：线上提交"></div>
+          <div class="form-field" style="grid-column:1/-1"><label>${icon('map-pin', 12)} 地点</label><input class="input" data-form="location" value="${esc(f.location)}" placeholder="例如：线上提交"></div>
         </div>${span && span > 0 ? `<p class="hint">时间跨度：${span} 天（${esc(f.startDate)} → ${esc(f.dueDate)}）</p>` : ''}`
         : `<div class="form-grid">
           <div class="form-field"><label>${icon('calendar', 12)} 日期</label><input class="input" type="date" data-form="dueDate" value="${esc(f.dueDate)}"></div>
@@ -1674,6 +1678,7 @@ function saveTodoForm() {
   if (f.isDeadline) {
     if (!f.dueDate) { state.formError = '截止事项需要填写截止日期'; renderModal(); return; }
     if (f.startDate && f.dueDate && f.startDate > f.dueDate) { state.formError = '开始日期不能晚于截止日期'; renderModal(); return; }
+    if (f.startDate && f.dueDate && f.startDate === f.dueDate && f.startTime && f.dueTime && f.startTime >= f.dueTime) { state.formError = '同一天时，开始时间需要早于截止时间'; renderModal(); return; }
   } else if (f.dueTime && f.endTime && f.endTime <= f.dueTime) {
     state.formError = '结束时间需要晚于开始时间'; renderModal(); return;
   }
@@ -1682,6 +1687,7 @@ function saveTodoForm() {
     tags: f.tags.split(/[,，\s]+/).map(s => s.trim()).filter(Boolean).slice(0, 10),
     isDeadline: f.isDeadline,
     startDate: f.isDeadline ? (f.startDate || null) : null,
+    startTime: f.isDeadline ? (f.startTime || null) : null,
     dueDate: f.dueDate || null,
     dueTime: f.dueTime || null,
     endTime: f.isDeadline ? null : (f.endTime || null),
@@ -1695,6 +1701,7 @@ function saveTodoForm() {
 }
 function toggleFormDeadline() {
   state.form.isDeadline = !state.form.isDeadline;
+  if (state.form.isDeadline && !state.form.startTime) state.form.startTime = '09:00';
   state.formError = '';
   renderModal();
 }
@@ -1735,7 +1742,7 @@ function renderSettings() {
     <div class="drawer-head"><div class="flex-center"><span class="brand-icon" style="width:36px;height:36px;border-radius:11px;background:var(--surface-2);box-shadow:none;color:var(--cyan)">${icon('settings', 18)}</span><div><h2>设置</h2><p class="hint" style="margin:3px 0 0">大模型 · 周历 · 提醒 · 外观 · 导出</p></div></div><button class="icon-btn" data-act="close-modal" aria-label="关闭">${icon('x', 17)}</button></div>
     <div class="drawer-tabs">${tabs.map(([k, label, ic]) => `<button class="pill ${tab === k ? 'active' : ''}" data-act="settings-tab" data-tab="${k}">${icon(ic, 13)} ${label}</button>`).join('')}</div>
     <div class="drawer-body">${body}</div>
-    <div class="drawer-foot">密钥只保存在本机浏览器 · 数据不上传服务器 · v2.1.1</div>
+    <div class="drawer-foot">密钥只保存在本机浏览器 · 数据不上传服务器 · v2.2.0</div>
   </div></div>`;
 }
 function renderSettingsAI() {
@@ -1765,18 +1772,24 @@ function renderSettingsCalendar() {
   <button class="btn btn-primary" data-act="cal-save">${icon('save', 14)} 保存周历设置</button>`;
 }
 function renderSettingsReminder() {
-  const enabled = state.settings.reminderEnabled !== false;
-  const perm = notificationPermission();
-  return `<div class="setting-item"><div class="flex-between"><div><h4>${icon('bell', 14)} 日程提醒</h4><p>${enabled ? '已开启，按规则提醒' : '已暂停，不会再弹任何提醒'}</p></div><button class="btn btn-sm ${enabled ? 'btn-primary' : 'btn-ghost'}" data-act="reminder-toggle">${enabled ? '已开启' : '已关闭'}</button></div></div>
-  <div class="setting-item"><h4>${icon('shield-check', 13)} 系统通知权限</h4>${notifyDiagHTML()}
-    <div class="row wrap" style="margin-top:7px"><button class="btn btn-primary btn-sm" data-act="notify-enable">允许桌面通知</button><button class="btn btn-ghost btn-sm" data-act="notify-test">${icon('send', 12)} 测试提醒</button><button class="btn btn-ghost btn-sm" data-act="alarm-test">测试闹钟</button></div>
+  return `<div class="setting-item"><h4>${icon('calendar', 14)} 导出到系统日历</h4>
+    <p>不再由网页在后台弹提醒。导出 .ics 后交给手机/电脑的本地日历，由系统负责通知；导入时系统会请求你手动允许。</p>
+    <button class="btn btn-primary btn-sm" style="width:100%;margin-top:8px" data-act="export-ical" data-range="all" data-open="1">${icon('calendar', 13)} 导出并打开系统日历（全部）</button>
+    <div class="form-grid" style="margin-top:7px">
+      <button class="btn btn-ghost btn-sm" data-act="export-ical" data-range="all" data-open="0">全部未完成 .ics</button>
+      <button class="btn btn-ghost btn-sm" data-act="export-ical" data-range="today" data-open="0">今天 .ics</button>
+      <button class="btn btn-ghost btn-sm" data-act="export-ical" data-range="week" data-open="0">本周 .ics</button>
+    </div>
+    <p class="hint" style="margin-top:7px">手机：系统分享面板/日历；电脑：默认日历或下载后用日历打开。若没有自动打开，请在下载目录点开 .ics。</p>
   </div>
-  <div class="setting-item"><h4>提醒规则</h4><ul style="margin:0;padding-left:17px;font-size:11px;line-height:1.8;color:var(--muted)">
-    <li>普通日程：开始前 1 小时提醒一次；没写具体时间的不提醒。</li>
-    <li>截止事项：截止前 1 小时提醒；长时段在结束前 3 小时再提醒一次。</li>
-    <li>已完成、已删除、设为免打扰的条目不提醒。</li>
-    <li>页面在后台标签页仍会轮询；浏览器完全关闭后无法提醒。</li></ul></div>
-  <div class="info-box">当前权限：<b>${perm}</b> · Service Worker：<b>${('serviceWorker' in navigator) ? (swReg ? '已就绪' : '未注册') : '不支持'}</b><br>全屏闹钟兜底：系统通知不可用时，到点弹出全屏提醒 + 声音 + 震动。</div>`;
+  <div class="setting-item"><h4>${icon('bell', 13)} 日历里的提醒规则</h4><ul style="margin:0;padding-left:17px;font-size:11px;line-height:1.85;color:var(--muted)">
+    <li>普通日程：开始/截止前 <b>1 小时</b>提醒一次。</li>
+    <li>截止事项：<b>开始前 1 小时</b> 和 <b>结束前 1 小时</b> 各一次（系统日历两个提醒）。</li>
+    <li>截止事项未填开始时间时，按开始日期 <b>09:00</b> 计算开始提醒；可在编辑里修改。</li>
+    <li>只填日期、不填具体时间：写成全天事件，不添加小时提醒。</li>
+    <li>已完成、垃圾箱不导出；免打扰条目会写入日历但不加提醒。</li>
+  </ul></div>
+  <div class="info-box">导出的 .ics 只在本机生成，不上传服务器。导入后由系统日历负责提醒，网页关闭也会通知；删除/修改日程后请重新导出覆盖。</div>`;
 }
 function renderSettingsAppearance() {
   return `<div class="info-box">各主题功能完全一致，只改变颜色、字号、间距与动效。切换后立即生效，全应用通用，刷新后保持。</div>
@@ -1794,10 +1807,10 @@ function renderSettingsExport() {
   <div class="setting-item"><h4>${icon('file-text', 13)} 数据备份</h4>
     <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:6px" data-act="export-schedule">${icon('file-text', 12)} schedule-tracker 日程库（schedule.json）</button>
     <button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:6px" data-act="export-json">${icon('file-text', 12)} 应用自身 JSON（含全部字段）</button>
-    <button class="btn btn-ghost btn-sm" style="width:100%" data-act="export-ical">${icon('calendar', 12)} 导入手机日历（.ics）</button>
+    <button class="btn btn-ghost btn-sm" style="width:100%" data-act="export-ical" data-range="all" data-open="1">${icon('calendar', 12)} 导出系统日历提醒（.ics）</button>
   </div>
   <div class="setting-item"><h4>${icon('upload', 13)} 导入</h4><p>支持 JSON、CSV、TXT、Markdown、Word、Excel；图片可走 AI 视觉识别。</p><button class="btn btn-primary btn-sm" data-act="open-import">${icon('upload', 12)} 打开导入</button></div>
-  <div class="info-box">数据 ${state.todos.length} 条 · 版本 v2.1.1 · 图片/PDF/Office 解析库按需加载</div>`;
+  <div class="info-box">数据 ${state.todos.length} 条 · 版本 v2.2.0 · 图片/PDF/Office 解析库按需加载</div>`;
 }
 function renderSettingsHelp() {
   const shots = getAssets().tutorial || [];
@@ -2611,7 +2624,7 @@ function parseImportDue(raw) {
     if (d) date = d;
     if (t) time = t;
   }
-  return { dueDate: date, dueTime: time, endTime: normTime(pick(raw, ['endTime', 'end', '结束时间'])) || null, startDate: normDate(pick(raw, ['startDate', 'beginDate', '开始日期'])) || null };
+  return { dueDate: date, dueTime: time, endTime: normTime(pick(raw, ['endTime', 'end', '结束时间'])) || null, startDate: normDate(pick(raw, ['startDate', 'beginDate', '开始日期'])) || null, startTime: normTime(pick(raw, ['startTime', 'beginTime', '开始时间'])) || null };
 }
 function normalizeImported(raw) {
   if (typeof raw === 'string') raw = { title: raw };
@@ -2649,6 +2662,7 @@ function normalizeImported(raw) {
     dueTime: due.dueTime || null,
     endTime: due.endTime || null,
     startDate: due.startDate || null,
+    startTime: due.startTime || null,
     isDeadline: !!raw.isDeadline || raw.kind === 'deadline',
     location: String(pick(raw, ['location', 'place', '地点', '位置']) || ''),
     reminder: true,
@@ -2965,27 +2979,127 @@ function exportScheduleJson() {
 }
 function icalEsc(s) { return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
 function fmtLocal(d) { return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}T${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`; }
-function exportIcal() {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SmartScheduler//CN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
-  activeTodos().forEach(t => {
-    if (!t.dueDate) return;
-    const time = t.dueTime || '09:00';
-    const d = new Date(t.dueDate + 'T' + time);
-    if (isNaN(d)) return;
+function fmtDateOnly(d) { return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`; }
+function fmtUtc(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+function icsDate(date, time) { const d = new Date(date + 'T' + (time || '00:00') + ':00'); return isNaN(d) ? null : d; }
+function icsAddDay(date) { const d = new Date(date + 'T00:00:00'); if (isNaN(d)) return null; d.setDate(d.getDate() + 1); return fmtDateOnly(d); }
+function icsAddMin(d, min) { return new Date(d.getTime() + min * 60000); }
+function icsFold(line) {
+  // RFC 5545：每行不超过 75 个八位组，中文按 UTF-8 字节计算
+  const bytes = typeof TextEncoder !== 'undefined'
+    ? (s => new TextEncoder().encode(s).length)
+    : (s => unescape(encodeURIComponent(s)).length);
+  let out = '', cur = '';
+  for (const ch of String(line)) {
+    if (bytes(cur + ch) > 73) { out += cur + '\r\n '; cur = ch; }
+    else cur += ch;
+  }
+  return out + cur;
+}
+function buildICS(range) {
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SmartScheduler//CN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:智能日程助手'];
+  const stamp = fmtUtc(new Date());
+  let count = 0;
+  rangeEntries(range || 'all').forEach(t => {
+    if (!t.dueDate || t.status === 'done' || t.done) return;
+    const allDay = !t.dueTime;
+    let start = null, end = null, startDate = t.dueDate, endDate = t.dueDate;
+    if (t.isDeadline) {
+      startDate = t.startDate || t.dueDate;
+      endDate = t.dueDate;
+      const st = t.startTime || '09:00';
+      const en = t.dueTime || '';
+      if (en) {
+        start = icsDate(startDate, st);
+        end = icsDate(endDate, en);
+        if (start && end && end <= start) end = icsAddMin(start, 30);
+      }
+    } else if (t.dueTime) {
+      start = icsDate(t.dueDate, t.dueTime);
+      if (start) {
+        end = t.endTime ? icsDate(t.dueDate, t.endTime) : icsAddMin(start, 30);
+        if (end && end <= start) end = icsAddMin(start, 30);
+      }
+    }
+    const timed = !!(start && end);
+    let allDayStart = null, allDayEnd = null;
+    if (!timed) {
+      allDayStart = icsDate(startDate, '00:00');
+      allDayEnd = icsAddDay(endDate);
+      if (!allDayStart || !allDayEnd) return;
+    }
+    const descParts = [];
+    if (t.notes) descParts.push(t.notes);
+    if (t.isDeadline) descParts.push(`截止事项：${startDate} 开始 → ${endDate}${t.dueTime ? ' ' + t.dueTime : ''}`);
+    descParts.push(`优先级：${t.priority}`);
+    if (t.tags && t.tags.length) descParts.push('标签：' + t.tags.join('、'));
     lines.push('BEGIN:VEVENT');
-    lines.push('UID:' + t.id + '@smartscheduler');
-    lines.push('DTSTAMP:' + fmtLocal(new Date()));
-    lines.push('DTSTART:' + fmtLocal(d));
-    if (t.endTime) { const e = new Date(t.dueDate + 'T' + t.endTime); if (!isNaN(e)) lines.push('DTEND:' + fmtLocal(e)); }
+    lines.push('UID:' + icalEsc(t.id) + '@smart-schedule');
+    lines.push('DTSTAMP:' + stamp);
+    if (timed) {
+      lines.push('DTSTART:' + fmtLocal(start));
+      lines.push('DTEND:' + fmtLocal(end));
+    } else {
+      lines.push('DTSTART;VALUE=DATE:' + fmtDateOnly(allDayStart));
+      lines.push('DTEND;VALUE=DATE:' + allDayEnd);
+    }
     lines.push('SUMMARY:' + icalEsc(t.title));
     if (t.location) lines.push('LOCATION:' + icalEsc(t.location));
-    if (t.notes) lines.push('DESCRIPTION:' + icalEsc(t.notes));
-    if (t.tags && t.tags.length) lines.push('CATEGORIES:' + icalEsc(t.tags.join(',')));
+    if (descParts.length) lines.push('DESCRIPTION:' + icalEsc(descParts.join('\n')));
+    if (t.tags && t.tags.length) lines.push('CATEGORIES:' + t.tags.map(icalEsc).join(','));
+    lines.push('STATUS:CONFIRMED');
+    lines.push('TRANSP:OPAQUE');
+    if (timed && !t.muted) {
+      lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icalEsc('日程提醒：' + t.title), 'TRIGGER:-PT1H', 'END:VALARM');
+      if (t.isDeadline) lines.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icalEsc('截止提醒：' + t.title), 'TRIGGER;RELATED=END:-PT1H', 'END:VALARM');
+    }
     lines.push('END:VEVENT');
+    count++;
   });
   lines.push('END:VCALENDAR');
-  download('schedule.ics', lines.join('\r\n'), 'text/calendar');
-  toast('已导出 .ics，可导入手机日历');
+  return { text: lines.map(icsFold).join('\r\n') + '\r\n', count };
+}
+function icsFilename(range) {
+  return '智能日程助手-' + (range === 'today' ? '今天' : range === 'week' ? '本周' : '全部') + '.ics';
+}
+function icsDownload(text, filename) {
+  const blob = new Blob([text], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+function icsOpenOrShare(text, filename) {
+  const blob = new Blob([text], { type: 'text/calendar;charset=utf-8' });
+  let file = null;
+  try { file = new File([blob], filename, { type: 'text/calendar' }); } catch (e) {}
+  const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 820);
+  if (mobile && file && typeof navigator.share === 'function' && typeof navigator.canShare === 'function') {
+    let can = false; try { can = navigator.canShare({ files: [file] }); } catch (e) {}
+    if (can) {
+      navigator.share({ files: [file], title: '导入到系统日历', text: '选择「日历」并允许导入，提醒由系统日历发送' })
+        .then(() => toast('已交给系统日历，请在弹出的面板里选择日历并允许导入'))
+        .catch(err => { if (err && err.name !== 'AbortError') icsDownload(text, filename); });
+      return;
+    }
+  }
+  if (mobile) {
+    icsDownload(text, filename);
+    toast('已下载 .ics：请在「文件/下载」里点开它，选择日历并允许导入');
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) icsDownload(text, filename);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  toast('已生成 .ics：若浏览器没有自动打开日历，请在下载目录点开该文件并允许导入');
+}
+function exportIcal(range, open) {
+  const r = buildICS(range || 'all');
+  if (!r.count) { toast('没有可导出的日程（需要先填写日期）'); return; }
+  const name = icsFilename(range || 'all');
+  if (open === false) { icsDownload(r.text, name); toast('已下载 ' + name + '（' + r.count + ' 条）'); }
+  else { icsOpenOrShare(r.text, name); }
 }
 function exportScheduleImage(range) {
   const list = rangeEntries(range);
@@ -3162,7 +3276,7 @@ $('#alarm-snooze').onclick = () => {
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   if (el.dataset.act === 'export-json') exportJson();
-  else if (el.dataset.act === 'export-ical') exportIcal();
+  else if (el.dataset.act === 'export-ical') exportIcal(el.dataset.range || 'all', el.dataset.open === '1');
   else if (el.dataset.act === 'export-image') exportScheduleImage(el.dataset.range || 'week');
   else if (el.dataset.act === 'export-pdf') exportSchedulePDF(el.dataset.range || 'week');
 });
@@ -3200,11 +3314,9 @@ function boot() {
     renderAll();
     if (storageBlocked) setTimeout(() => toast('浏览器禁用了本地存储：日程只在本次页面有效。请关闭无痕模式 / 允许网站数据后刷新。', 8000), 600);
     initServiceWorker();
-    checkReminders();
-    setInterval(checkReminders, 30000);
     setInterval(() => { const r = runAuto(); if (r.trashed || r.progressed) renderAll(); }, 60000);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { const r = runAuto(); checkReminders(); if (r.trashed || r.progressed) renderAll(); } });
-    window.addEventListener('focus', () => { const r = runAuto(); checkReminders(); if (r.trashed || r.progressed) renderAll(); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { const r = runAuto(); if (r.trashed || r.progressed) renderAll(); } });
+    window.addEventListener('focus', () => { const r = runAuto(); if (r.trashed || r.progressed) renderAll(); });
     window.addEventListener('resize', () => { renderFab(); renderThemePop(); });
     const params = new URLSearchParams(location.search);
     const th = params.get('theme');
