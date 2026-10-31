@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2d6cdf">
+<title>智能日程助手</title>
+<style>
+  :root{
+    --bg:#f4f6fb; --panel:#ffffff; --text:#222; --muted:#888; --border:#e3e7ef;
+    --primary:#2d6cdf; --primary-t:#fff; --accent:#ff7a45; --radius:8px;
+    --b-high:#e74c3c; --b-mid:#f39c12; --b-low:#27ae60;
+    --font:14px; --h1:22px;
+  }
+  body.theme-teen{--bg:#e8f6ff; --panel:#ffffff; --primary:#00bcd4; --accent:#ff4081; --b-high:#ff5252; --b-mid:#ff9800; --b-low:#4caf50;}
+  body.theme-elder{--bg:#fffdf5; --panel:#fffef8; --text:#1a1a1a; --border:#d9d2c0; --primary:#1565c0; --accent:#e65100; --font:18px; --h1:30px;}
+  body.theme-acg{--bg:#fde9f3; --panel:#fff; --primary:#ff5fa2; --accent:#7c4dff; --b-high:#ff4081; --b-mid:#ffab40; --b-low:#69f0ae;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-size:var(--font);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}
+  header{background:var(--panel);border-bottom:1px solid var(--border);padding:10px 14px;position:sticky;top:0;z-index:10;}
+  .hdr-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  h1{font-size:var(--h1);margin:0;color:var(--primary);}
+  .hdr-actions{display:flex;gap:8px;align-items:center;}
+  select,input,textarea,button{font-size:var(--font);font-family:inherit;}
+  nav{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .tab-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--radius);cursor:pointer;}
+  .tab-btn.active{background:var(--primary);color:var(--primary-t);border-color:var(--primary);}
+  main{padding:14px;max-width:980px;margin:0 auto;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  h2{margin:0 0 12px;}
+  section,form{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+  input[type=text],input[type=password],input[type=number],textarea,select{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;margin:6px 0;background:#fff;color:var(--text);}
+  label{display:block;margin:6px 0;font-weight:600;}
+  button{background:var(--primary);color:var(--primary-t);border:none;padding:8px 14px;border-radius:6px;cursor:pointer;}
+  button:hover{filter:brightness(1.05);}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0;}
+  .item{border:1px solid var(--border);border-radius:6px;padding:10px;margin:8px 0;background:var(--panel);}
+  .item.done{opacity:.55;text-decoration:line-through;}
+  .title{font-weight:700;margin-bottom:4px;word-break:break-all;}
+  .meta{color:var(--muted);font-size:.92em;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .badge{background:#eef2fb;color:#456;border:1px solid var(--border);border-radius:20px;padding:1px 8px;font-size:.85em;}
+  .badge.b-high{background:#fdecea;color:var(--b-high);}
+  .badge.b-mid{background:#fef5e7;color:var(--b-mid);}
+  .badge.b-low{background:#eafaf1;color:var(--b-low);}
+  .actions{margin-top:8px;display:flex;gap:6px;}
+  .actions button{padding:5px 10px;font-size:.9em;}
+  .board-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .kanban-col{border:1px solid var(--border);border-radius:6px;padding:8px;background:var(--bg);}
+  .kanban-col h3{margin:0 0 8px;font-size:1em;}
+  .kanban-card{border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0;background:var(--panel);}
+  .cal-nav{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-head{font-weight:700;text-align:center;padding:4px;color:var(--muted);}
+  .cal-cell{border:1px solid var(--border);border-radius:4px;min-height:56px;padding:4px;background:var(--panel);cursor:pointer;font-size:13px;}
+  .cal-cell.muted{color:#ccc;background:var(--bg);}
+  .cal-cell.today{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary) inset;}
+  .cal-day{font-weight:700;}
+  .cal-dot{background:var(--primary);color:#fff;border-radius:10px;padding:0 6px;font-size:11px;display:inline-block;margin-top:2px;}
+  .stat-card{border:1px solid var(--border);border-radius:6px;padding:12px;margin:8px 0;}
+  .stat-row{display:flex;align-items:center;gap:8px;margin:6px 0;}
+  .stat-label{width:64px;}
+  .stat-bar{flex:1;height:12px;background:var(--bg);border-radius:6px;overflow:hidden;}
+  .stat-bar i{display:block;height:100%;background:var(--primary);}
+  .stat-num{width:40px;text-align:right;}
+  .muted{color:var(--muted);}
+  .ai-block{border:1px solid var(--border);border-radius:6px;padding:10px;margin:8px 0;}
+  .ai-block h3{margin:0 0 8px;}
+  #chat-box{border:1px solid var(--border);border-radius:6px;padding:8px;height:220px;overflow:auto;margin-bottom:8px;background:var(--bg);}
+  .msg{margin:6px 0;padding:6px 10px;border-radius:8px;max-width:80%;word-break:break-all;}
+  .msg.user{background:var(--primary);color:var(--primary-t);margin-left:auto;}
+  .msg.ai{background:var(--panel);border:1px solid var(--border);}
+  .chat-input{display:flex;gap:8px;}
+  .chat-input input{flex:1;}
+  pre{white-space:pre-wrap;word-break:break-all;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;margin:8px 0;}
+  .file-btn{display:inline-block;background:var(--primary);color:var(--primary-t);border-radius:6px;padding:8px 14px;cursor:pointer;}
+  .file-btn input{display:none;}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#333;color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:.3s;z-index:99;max-width:90%;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .modal-box{background:var(--panel);border-radius:12px;padding:18px;max-width:340px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,.2);}
+  .modal-box h3{margin:0 0 10px;color:var(--primary);}
+  .modal-box p{margin:0 0 14px;line-height:1.6;}
+  .hint{font-size:.85em;color:var(--muted);margin:6px 0;}
+</style>
+</head>
+<body class="theme-standard">
+  <header>
+    <div class="hdr-top">
+      <h1>智能日程助手</h1>
+      <div class="hdr-actions">
+        <select id="theme-select" title="切换主题">
+          <option value="standard">标准</option>
+          <option value="teen">青少年</option>
+          <option value="elder">老年</option>
+          <option value="acg">二次元</option>
+        </select>
+        <button id="notify-btn" type="button">启用通知</button>
+        <button id="install-btn" type="button">＋桌面</button>
+      </div>
+    </div>
+    <nav>
+      <button class="tab-btn active" data-tab="todos">待办列表</button>
+      <button class="tab-btn" data-tab="board">看板</button>
+      <button class="tab-btn" data-tab="calendar">日历</button>
+      <button class="tab-btn" data-tab="stats">统计</button>
+      <button class="tab-btn" data-tab="trash">回收站</button>
+      <button class="tab-btn" data-tab="ai">AI 助手</button>
+      <button class="tab-btn" data-tab="settings">设置</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 待办列表 -->
+    <section id="todos" class="tab-panel active">
+      <h2>待办列表</h2>
+      <form id="add-form">
+        <input type="text" id="f-title" placeholder="标题（必填）" required>
+        <input type="text" id="f-due" placeholder="时间，如 2026-10-31 18:00">
+        <label>优先级
+          <select id="f-priority">
+            <option value="1">高</option>
+            <option value="2" selected>中</option>
+            <option value="3">低</option>
+          </select>
+        </label>
+        <input type="text" id="f-tags" placeholder="标签，逗号分隔">
+        <input type="text" id="f-note" placeholder="备注">
+        <label><input type="checkbox" id="f-reminder"> 提醒</label>
+        <input type="number" id="f-offset" placeholder="提前分钟" value="0" min="0">
+        <button type="submit">添加</button>
+      </form>
+      <div id="todo-list"></div>
+    </section>
+
+    <!-- 看板 -->
+    <section id="board" class="tab-panel">
+      <h2>看板（按状态）</h2>
+      <div id="board-cols" class="board-cols"></div>
+    </section>
+
+    <!-- 日历 -->
+    <section id="calendar" class="tab-panel">
+      <h2>日历</h2>
+      <div class="cal-nav">
+        <button id="cal-prev">‹ 上月</button>
+        <span id="cal-title"></span>
+        <button id="cal-next">下月 ›</button>
+        <button id="cal-today">今天</button>
+      </div>
+      <div id="cal-grid" class="cal-grid"></div>
+      <h3 id="cal-day-title"></h3>
+      <div id="cal-day-list"></div>
+    </section>
+
+    <!-- 统计 -->
+    <section id="stats" class="tab-panel">
+      <h2>统计</h2>
+      <div id="stats-box"></div>
+    </section>
+
+    <!-- 回收站 -->
+    <section id="trash" class="tab-panel">
+      <h2>回收站</h2>
+      <div class="row">
+        <button id="trash-empty">清空回收站</button>
+      </div>
+      <div id="trash-list"></div>
+    </section>
+
+    <!-- AI 助手 -->
+    <section id="ai" class="tab-panel">
+      <h2>AI 助手</h2>
+      <div class="ai-block">
+        <h3>智能添加</h3>
+        <textarea id="ai-text" rows="3" placeholder="用一句话描述，例如：明天下午3点提醒我开会，高优先级"></textarea>
+        <button id="ai-add-btn">解析并添加</button>
+        <pre id="ai-result"></pre>
+      </div>
+      <div class="ai-block">
+        <h3>对话</h3>
+        <div id="chat-box"></div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="输入消息…">
+          <button id="chat-send">发送</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section id="settings" class="tab-panel">
+      <h2>设置（AI 接入）</h2>
+      <form id="settings-form">
+        <label>服务商预设（选完会自动填 Base URL / 模型，可手动改）
+          <select id="s-provider">
+            <option value="">自定义</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="openai">OpenAI</option>
+            <option value="doubao">豆包（火山方舟）</option>
+            <option value="qwen">通义千问</option>
+          </select>
+        </label>
+        <label>Base URL
+          <input type="text" id="s-base-url" placeholder="https://api.deepseek.com">
+        </label>
+        <label>API Key
+          <input type="password" id="s-api-key" placeholder="sk-...">
+        </label>
+        <label>模型
+          <input type="text" id="s-model" placeholder="deepseek-chat">
+        </label>
+        <label>代理（CORS 代理，可选，解决浏览器跨域）
+          <input type="text" id="s-proxy" placeholder="如 https://corsproxy.io/?url=">
+        </label>
+        <p class="hint">浏览器直连大模型可能被 CORS 拦截。填了「代理」后，请求会经该代理转发（格式需为 <code>代理地址?url=</code>，如 <code>https://corsproxy.io/?url=</code>）。选 DeepSeek 预设后，Base URL 填 <code>https://api.deepseek.com</code>、模型填 <code>deepseek-chat</code>（或 <code>deepseek-reasoner</code>）。</p>
+        <div class="row">
+          <button type="submit">保存设置</button>
+          <button type="button" id="test-btn">测试连接</button>
+        </div>
+        <pre id="settings-msg"></pre>
+      </form>
+
+      <h3>数据导入 / 导出</h3>
+      <div class="row">
+        <button id="export-btn">导出 JSON</button>
+        <button id="export-ical-btn">导出 iCal(.ics)</button>
+        <button id="import-btn">导入 JSON</button>
+        <label class="file-btn">导入文件(TXT/CSV/JSON)
+          <input type="file" id="file-input" accept=".txt,.md,.csv,.json">
+        </label>
+      </div>
+      <textarea id="io-text" rows="6" placeholder="导入时粘贴 JSON；导出时此处显示结果"></textarea>
+      <pre id="io-msg"></pre>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- 添加到桌面指引弹窗 -->
+  <div id="install-modal" class="modal" style="display:none;">
+    <div class="modal-box">
+      <h3>添加到手机桌面</h3>
+      <p id="install-guide-text"></p>
+      <div class="row">
+        <button id="copy-link-btn" type="button">复制当前链接</button>
+        <button id="install-close-btn" type="button">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ===================== 数据存储（localStorage） =====================
+const LS_TODOS = 'ss_todos', LS_CFG = 'ss_cfg', LS_THEME = 'ss_theme';
+let TODOS = [];                 // 仅活动项（不含已删除）
+let TRASH = [];                 // 回收站
+let CONFIG = { base_url: 'https://api.openai.com/v1', api_key: '', model: 'gpt-3.5-turbo', proxy: '' };
+const notified = new Set();
+
+const PRIORITY = { 1: '高', 2: '中', 3: '低' };
+const STATUS = { todo: '待办', in_progress: '进行中', done: '已完成' };
+const STATUS_ORDER = ['todo', 'in_progress', 'done'];
+
+function $(id) { return document.getElementById(id); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function isOverdue(t) {
+  if (!t.due || t.status === 'done') return false;
+  const d = Date.parse((t.due).replace(' ', 'T'));
+  return !isNaN(d) && d < Date.now();
+}
+function genId() { return 't' + Date.now() + Math.random().toString(36).slice(2, 7); }
+
+function loadAll() {
+  try { const arr = JSON.parse(localStorage.getItem(LS_TODOS) || '[]'); TODOS = arr.filter(t => !t.deleted); TRASH = arr.filter(t => t.deleted); }
+  catch (e) { TODOS = []; TRASH = []; }
+  try { CONFIG = Object.assign({ base_url: 'https://api.openai.com/v1', api_key: '', model: 'gpt-3.5-turbo', proxy: '' }, JSON.parse(localStorage.getItem(LS_CFG) || '{}')); }
+  catch (e) {}
+}
+function saveTodos() {
+  const all = TODOS.concat(TRASH);
+  localStorage.setItem(LS_TODOS, JSON.stringify(all));
+  TRASH = all.filter(t => t.deleted);
+}
+function saveCfg() { localStorage.setItem(LS_CFG, JSON.stringify(CONFIG)); }
+
+function addTodo(p) {
+  const t = {
+    id: genId(), title: p.title, due: p.due || null,
+    priority: p.priority || 2,
+    tags: Array.isArray(p.tags) ? p.tags : (p.tags || '').split(',').map(s => s.trim()).filter(Boolean),
+    note: p.note || '', status: p.status || 'todo',
+    reminder: !!p.reminder, reminder_offset: p.reminder_offset || 0,
+    reminder_fired: false, created_at: Date.now(), updated_at: Date.now(), deleted: false
+  };
+  TODOS.push(t); saveTodos(); return t;
+}
+function findTodo(id) { return TODOS.find(x => x.id === id); }
+function updateTodo(id, patch) { const t = findTodo(id); if (!t) return null; Object.assign(t, patch); t.updated_at = Date.now(); saveTodos(); return t; }
+function softDelete(id) { const t = findTodo(id); if (!t) return; t.deleted = true; saveTodos(); TODOS = TODOS.filter(x => x.id !== id); TRASH.push(t); }
+function restoreTodo(id) { const t = TRASH.find(x => x.id === id); if (!t) return; t.deleted = false; t.reminder_fired = false; TODOS.push(t); TRASH = TRASH.filter(x => x.id !== id); saveTodos(); }
+function purge(id) { TRASH = TRASH.filter(x => x.id !== id); saveTodos(); }
+function emptyTrash() { TRASH = []; saveTodos(); }
+function loadState() { const tb = document.querySelector('.tab-btn[data-tab="trash"]'); if (tb) tb.textContent = TRASH.length > 0 ? `回收站(${TRASH.length})` : '回收站'; }
+
+// ===================== 标签页 =====================
+let currentTab = 'todos';
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    $(currentTab).classList.add('active');
+    if (currentTab === 'board') renderBoard();
+    if (currentTab === 'calendar') renderCalendar();
+    if (currentTab === 'stats') renderStats();
+    if (currentTab === 'trash') loadTrash();
+  });
+});
+
+// ===================== 列表视图 =====================
+function todoCard(t) {
+  const pcls = t.priority === 1 ? 'b-high' : t.priority === 3 ? 'b-low' : 'b-mid';
+  const tags = (t.tags || []).map(x => `<span class="badge">${escapeHtml(x)}</span>`).join('');
+  const rem = t.reminder ? `<span class="badge">提醒${t.reminder_offset || ''}分</span>` : '';
+  const over = isOverdue(t) ? '<span class="badge b-high">逾期</span>' : '';
+  return `<div class="item ${t.status === 'done' ? 'done' : ''}">
+    <div class="title"><b>${escapeHtml(t.title)}</b></div>
+    <div class="meta">
+      <span class="badge ${pcls}">${PRIORITY[t.priority] || t.priority}</span>
+      <span class="badge">${STATUS[t.status] || t.status}</span>
+      ${t.due ? '⏰ ' + escapeHtml(t.due) + ' ' : ''}
+      ${tags}${rem}${over}
+      ${t.note ? '｜' + escapeHtml(t.note) : ''}
+    </div>
+    <div class="actions">
+      <button onclick="cycleStatus('${t.id}')">状态切换</button>
+      <button onclick="delTodo('${t.id}')">删除</button>
+    </div>
+  </div>`;
+}
+function renderTodos() {
+  const box = $('todo-list');
+  if (!TODOS.length) { box.innerHTML = '<p>暂无待办，去「AI 助手」或用上方表单添加。</p>'; return; }
+  const sorted = [...TODOS].sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999') || a.priority - b.priority);
+  box.innerHTML = sorted.map(todoCard).join('');
+}
+async function cycleStatus(id) {
+  const t = findTodo(id); if (!t) return;
+  const next = STATUS_ORDER[(STATUS_ORDER.indexOf(t.status) + 1) % STATUS_ORDER.length];
+  updateTodo(id, { status: next });
+  renderTodos(); if (currentTab === 'board') renderBoard();
+}
+async function delTodo(id) {
+  if (!confirm('删除后进入回收站，可在「回收站」恢复。确定删除？')) return;
+  softDelete(id); renderTodos(); loadState();
+}
+
+// ===================== 看板 =====================
+function renderBoard() {
+  const cols = { todo: [], in_progress: [], done: [] };
+  TODOS.forEach(t => { (cols[t.status] || cols.todo).push(t); });
+  $('board-cols').innerHTML = STATUS_ORDER.map(s => {
+    const items = (cols[s] || []).sort((a, b) => a.priority - b.priority)
+      .map(t => `<div class="kanban-card ${t.status === 'done' ? 'done' : ''}">
+        <div class="title"><b>${escapeHtml(t.title)}</b></div>
+        <div class="meta">${t.due ? '⏰ ' + escapeHtml(t.due) : ''}
+          <span class="badge ${t.priority === 1 ? 'b-high' : t.priority === 3 ? 'b-low' : 'b-mid'}">${PRIORITY[t.priority] || t.priority}</span></div>
+        <div class="actions"><button onclick="cycleStatus('${t.id}')">切换</button>
+        <button onclick="delTodo('${t.id}')">删</button></div>
+      </div>`).join('');
+    return `<div class="kanban-col"><h3>${STATUS[s]} (${cols[s].length})</h3>${items || '<p class="muted">空</p>'}</div>`;
+  }).join('');
+}
+
+// ===================== 日历 =====================
+let calYear, calMonth;
+function renderCalendar() {
+  const now = new Date();
+  if (calYear === undefined) { calYear = now.getFullYear(); calMonth = now.getMonth(); }
+  const first = new Date(calYear, calMonth, 1);
+  const startDay = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+  $('cal-title').textContent = `${calYear} 年 ${calMonth + 1} 月`;
+  const cells = [];
+  ['一', '二', '三', '四', '五', '六', '日'].forEach(w => cells.push(`<div class="cal-head">${w}</div>`));
+  for (let i = 0; i < startDay; i++) cells.push(`<div class="cal-cell muted">${prevDays - startDay + 1 + i}</div>`);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const cnt = TODOS.filter(t => t.due && t.due.startsWith(key)).length;
+    const isToday = d === now.getDate() && calMonth === now.getMonth() && calYear === now.getFullYear();
+    cells.push(`<div class="cal-cell ${isToday ? 'today' : ''}" onclick="selectDay('${key}')">
+      <div class="cal-day">${d}</div>${cnt ? `<div class="cal-dot">${cnt}</div>` : ''}</div>`);
+  }
+  const total = startDay + daysInMonth;
+  const tail = (7 - (total % 7)) % 7;
+  for (let i = 1; i <= tail; i++) cells.push(`<div class="cal-cell muted">${i}</div>`);
+  $('cal-grid').innerHTML = cells.join('');
+}
+function selectDay(key) {
+  const list = TODOS.filter(t => t.due && t.due.startsWith(key));
+  $('cal-day-title').textContent = `${key} 的日程（${list.length} 条）`;
+  $('cal-day-list').innerHTML = list.length ? list.map(todoCard).join('') : '<p class="muted">当天没有日程</p>';
+}
+$('cal-prev').onclick = () => { calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); };
+$('cal-next').onclick = () => { calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); };
+$('cal-today').onclick = () => { const n = new Date(); calYear = n.getFullYear(); calMonth = n.getMonth(); renderCalendar(); };
+
+// ===================== 统计 =====================
+function bar(label, value, total) {
+  const pct = total ? Math.round(value / total * 100) : 0;
+  return `<div class="stat-row"><span class="stat-label">${label}</span>
+    <span class="stat-bar"><i style="width:${pct}%"></i></span>
+    <span class="stat-num">${value}</span></div>`;
+}
+function renderStats() {
+  const total = TODOS.length;
+  const byStatus = { todo: 0, in_progress: 0, done: 0 };
+  const byPri = { 1: 0, 2: 0, 3: 0 };
+  const tagCount = {};
+  TODOS.forEach(t => { byStatus[t.status] = (byStatus[t.status] || 0) + 1; byPri[t.priority] = (byPri[t.priority] || 0) + 1; (t.tags || []).forEach(tag => { tagCount[tag] = (tagCount[tag] || 0) + 1; }); });
+  const done = byStatus.done;
+  const rate = total ? Math.round(done / total * 100) : 0;
+  const tagsHtml = Object.keys(tagCount).length ? Object.entries(tagCount).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="badge">${escapeHtml(k)} ${v}</span>`).join(' ') : '<span class="muted">无</span>';
+  $('stats-box').innerHTML = `
+    <div class="stat-card"><h3>总数 ${total}</h3>
+      <p>完成率：<b>${rate}%</b>（已完成 ${done} / 总数 ${total}）</p>
+      ${bar('待办', byStatus.todo, total)}${bar('进行中', byStatus.in_progress, total)}${bar('已完成', done, total)}</div>
+    <div class="stat-card"><h3>优先级分布</h3>${bar('高', byPri[1], total)}${bar('中', byPri[2], total)}${bar('低', byPri[3], total)}</div>
+    <div class="stat-card"><h3>标签</h3><div>${tagsHtml}</div></div>`;
+}
+
+// ===================== 回收站 =====================
+function loadTrash() {
+  const box = $('trash-list');
+  if (!TRASH.length) { box.innerHTML = '<p class="muted">回收站为空。</p>'; return; }
+  box.innerHTML = TRASH.map(t => `<div class="item">
+    <div class="title"><b>${escapeHtml(t.title)}</b></div>
+    <div class="meta"><span class="badge">${STATUS[t.status] || t.status}</span>${t.due ? '⏰ ' + escapeHtml(t.due) : ''}</div>
+    <div class="actions"><button onclick="doRestore('${t.id}')">恢复</button><button onclick="purgeTodo('${t.id}')">彻底删除</button></div></div>`).join('');
+  loadState();
+}
+function doRestore(id) { restoreTodo(id); loadTrash(); renderTodos(); loadState(); }
+function purgeTodo(id) { if (!confirm('彻底删除后无法恢复，确定？')) return; purge(id); loadTrash(); }
+$('trash-empty').onclick = () => { if (!confirm('清空回收站？所有已删除项将永久消失。')) return; emptyTrash(); loadTrash(); };
+
+// ===================== 添加表单 =====================
+$('add-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  addTodo({
+    title: $('f-title').value, due: $('f-due').value || null,
+    priority: parseInt($('f-priority').value, 10),
+    tags: $('f-tags').value, note: $('f-note').value,
+    reminder: $('f-reminder').checked, reminder_offset: parseInt($('f-offset').value, 10) || 0
+  });
+  e.target.reset(); $('f-priority').value = '2';
+  renderTodos(); loadState();
+});
+
+// ===================== AI 客户端（浏览器直连） =====================
+function extractJson(text) {
+  if (!text) return null;
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try { return JSON.parse(m[0]); } catch (e) { return null; }
+}
+async function aiChat(messages) {
+  if (!CONFIG.api_key) throw new Error('请先在「设置」中填写 API Key');
+  const url = (CONFIG.base_url || 'https://api.openai.com/v1').replace(/\/$/, '') + '/chat/completions';
+  const fetchUrl = CONFIG.proxy ? (CONFIG.proxy + encodeURIComponent(url)) : url;
+  const resp = await fetch(fetchUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + CONFIG.api_key },
+    body: JSON.stringify({ model: CONFIG.model || 'gpt-3.5-turbo', messages, temperature: 0.7 })
+  });
+  if (!resp.ok) { const t = await resp.text().catch(() => ''); throw new Error('HTTP ' + resp.status + '：' + t.slice(0, 200)); }
+  const j = await resp.json();
+  return j.choices[0].message.content;
+}
+async function aiSmartAdd(text) {
+  const sys = '你是一个日程助手。请把用户的自然语言描述解析成一个日程项，只输出一段 JSON（不要解释、不要代码块标记），字段：title(字符串必填)、due(如 2026-10-31 18:00 或 null)、priority(1高/2中/3低，默认2)、tags(数组)、note(字符串)、reminder(布尔)、reminder_offset(整数分钟，默认0)';
+  const out = await aiChat([{ role: 'system', content: sys }, { role: 'user', content: text }]);
+  return extractJson(out);
+}
+
+$('ai-add-btn').onclick = async () => {
+  const text = $('ai-text').value.trim(); const out = $('ai-result');
+  if (!text) { out.textContent = '请先输入描述'; return; }
+  if (!CONFIG.api_key) { out.textContent = '请先在「设置」中填写 API Key'; return; }
+  out.textContent = '解析中…';
+  try {
+    const j = await aiSmartAdd(text);
+    if (j && j.title) {
+      out.textContent = '解析结果：\n' + JSON.stringify(j, null, 2);
+      if (confirm('已将 AI 解析结果添加为待办？')) {
+        addTodo(j); out.textContent += '\n✅ 已添加'; renderTodos(); loadState();
+      }
+    } else { out.textContent = '未能解析出日程，请换种说法。'; }
+  } catch (e) { out.textContent = 'AI 调用失败：' + (e.message || e) + '\n（跨域/CORS 错误请使用支持浏览器跨域的接口或代理）'; }
+};
+
+let chatHistory = [];
+function appendChat(role, text) {
+  const box = $('chat-box');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const span = document.createElement('span'); span.textContent = text;
+  div.appendChild(span); box.appendChild(div); box.scrollTop = box.scrollHeight;
+}
+$('chat-send').onclick = sendChat;
+$('chat-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+async function sendChat() {
+  const input = $('chat-input'); const text = input.value.trim(); if (!text) return;
+  input.value = ''; appendChat('user', text); chatHistory.push({ role: 'user', content: text });
+  try {
+    const reply = await aiChat(chatHistory);
+    appendChat('ai', reply); chatHistory.push({ role: 'assistant', content: reply });
+  } catch (e) { appendChat('ai', '调用失败：' + (e.message || e)); }
+}
+
+// ===================== 设置 =====================
+const PROVIDERS = {
+  deepseek: { base_url: 'https://api.deepseek.com', model: 'deepseek-chat' },
+  openai:   { base_url: 'https://api.openai.com/v1', model: 'gpt-3.5-turbo' },
+  doubao:   { base_url: 'https://ark.cn-beijing.volces.com/api/v3', model: 'ep-你的接入点ID' },
+  qwen:     { base_url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' },
+};
+$('s-provider').addEventListener('change', () => {
+  const p = PROVIDERS[$('s-provider').value];
+  if (p) { $('s-base-url').value = p.base_url; $('s-model').value = p.model; }
+});
+function loadSettings() {
+  const key = Object.keys(PROVIDERS).find(k => PROVIDERS[k].base_url === (CONFIG.base_url || '') && PROVIDERS[k].model === (CONFIG.model || ''));
+  $('s-provider').value = key || '';
+  $('s-base-url').value = CONFIG.base_url || '';
+  $('s-api-key').value = CONFIG.api_key || '';
+  $('s-model').value = CONFIG.model || '';
+  $('s-proxy').value = CONFIG.proxy || '';
+}
+$('settings-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  CONFIG.base_url = $('s-base-url').value.trim();
+  CONFIG.api_key = $('s-api-key').value.trim();
+  CONFIG.model = $('s-model').value.trim();
+  CONFIG.proxy = $('s-proxy').value.trim();
+  saveCfg();
+  $('settings-msg').textContent = '✅ 设置已保存' + (CONFIG.proxy ? '（已启用代理转发）' : '');
+});
+$('test-btn').onclick = async () => {
+  const msg = $('settings-msg'); msg.textContent = '测试中…';
+  try { const r = await aiChat([{ role: 'user', content: '你好，只回复“连接成功”' }]); msg.textContent = '✅ 连接成功，模型返回：' + r.slice(0, 60); }
+  catch (e) { msg.textContent = '❌ 连接失败：' + (e.message || e); }
+};
+
+// ===================== 导入 / 导出 =====================
+function download(filename, text, mime) {
+  const blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function exportJson() { download('todos.json', JSON.stringify(TODOS, null, 2), 'application/json'); }
+function icalEsc(s) { return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtLocal(d) { return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`; }
+function parseDue(s) { if (!s) return null; const d = Date.parse(s.replace(' ', 'T')); return isNaN(d) ? null : new Date(d); }
+function exportIcal() {
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SmartScheduler//CN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  TODOS.forEach(t => {
+    const dt = parseDue(t.due); if (!dt) return;
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:' + (t.id || 'x') + '@smartscheduler');
+    lines.push('DTSTAMP:' + fmtLocal(new Date()));
+    lines.push('DTSTART:' + fmtLocal(dt));
+    lines.push('SUMMARY:' + icalEsc(t.title || ''));
+    if (t.note) lines.push('DESCRIPTION:' + icalEsc(t.note));
+    if (t.reminder && t.reminder_offset) {
+      lines.push('BEGIN:VALARM');
+      lines.push('TRIGGER:-PT' + t.reminder_offset + 'M');
+      lines.push('ACTION:DISPLAY');
+      lines.push('DESCRIPTION:' + icalEsc(t.title || ''));
+      lines.push('END:VALARM');
+    }
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  download('schedule.ics', lines.join('\r\n'), 'text/calendar');
+}
+$('export-btn').onclick = exportJson;
+$('export-ical-btn').onclick = exportIcal;
+$('import-btn').onclick = () => {
+  const text = $('io-text').value.trim();
+  if (!text) { $('io-msg').textContent = '请先粘贴 JSON'; return; }
+  try {
+    const arr = JSON.parse(text);
+    if (!Array.isArray(arr)) throw new Error('应为数组');
+    let n = 0; arr.forEach(it => { if (it && it.title) { addTodo(it); n++; } });
+    $('io-msg').textContent = `✅ 导入完成，新增 ${n} 条`; renderTodos(); loadState();
+  } catch (e) { $('io-msg').textContent = '❌ 导入失败：' + e.message; }
+};
+
+// 文件导入（TXT / CSV / JSON；浏览器端纯文本解析）
+$('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const msg = $('io-msg'); msg.textContent = '解析文件中…';
+  const name = file.name.toLowerCase();
+  try {
+    if (name.endsWith('.json')) {
+      const arr = JSON.parse(await file.text());
+      let n = 0; (Array.isArray(arr) ? arr : [arr]).forEach(it => { if (it && it.title) { addTodo(it); n++; } });
+      msg.textContent = `✅ 导入 JSON 完成，新增 ${n} 条`;
+    } else if (name.endsWith('.csv')) {
+      const txt = await file.text();
+      const lines = txt.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      let n = 0; lines.forEach(line => {
+        const parts = line.split(',');
+        if (parts[0]) { addTodo({ title: parts[0], due: parts[1] || null, tags: parts.slice(2).join(',') }); n++; }
+      });
+      msg.textContent = `✅ 导入 CSV 完成，新增 ${n} 条`;
+    } else {
+      const txt = await file.text();
+      if (CONFIG.api_key) {
+        const out = await aiChat([{ role: 'system', content: '从下面的文本中提取所有日程/待办事项，输出 JSON 数组，每项含 title,due(或null),priority(1/2/3),tags,note,reminder,reminder_offset。只输出 JSON 数组。' }, { role: 'user', content: txt }]);
+        const arr = extractJson(out) || JSON.parse(out);
+        let n = 0; (Array.isArray(arr) ? arr : []).forEach(it => { if (it && it.title) { addTodo(it); n++; } });
+        msg.textContent = `✅ AI 已从《${file.name}》解析并导入 ${n} 条日程`;
+      } else {
+        msg.textContent = '未配置 API Key，无法自动解析。已提取文本，可复制后手动添加：\n\n' + txt.slice(0, 2000);
+        $('io-text').value = txt;
+      }
+    }
+    renderTodos(); loadState();
+  } catch (e) { msg.textContent = '❌ 解析失败：' + (e.message || e); }
+  e.target.value = '';
+});
+
+// ===================== 主题 =====================
+function applyTheme(th) {
+  document.body.className = 'theme-' + th;
+  $('theme-select').value = th;
+  try { localStorage.setItem(LS_THEME, th); } catch (e) {}
+}
+$('theme-select').addEventListener('change', (e) => applyTheme(e.target.value));
+
+// ===================== 移动端通知 =====================
+function showToast(text) {
+  const t = $('toast'); t.textContent = text; t.classList.add('show');
+  clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove('show'), 4000);
+}
+async function sendNotification(title, body) {
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') { new Notification(title, { body }); return; }
+  } catch (e) {}
+  showToast('🔔 ' + title + (body ? '：' + body : ''));
+}
+$('notify-btn').onclick = async () => {
+  if (!('Notification' in window)) { showToast('当前环境不支持系统通知，将使用页面内提醒'); return; }
+  let perm = 'default';
+  try { perm = await Notification.requestPermission(); } catch (e) {}
+  if (perm === 'granted') showToast('✅ 通知已启用，到点会提醒你');
+  else showToast('⚠️ 系统通知未授权，已启用页面内提醒（手机建议把网页“添加到主屏幕”后用 https 访问）');
+};
+
+// ===================== 添加到主屏幕 / 安装 =====================
+const SVG_ICON = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='42' fill='#2d6cdf'/><rect x='48' y='60' width='96' height='84' rx='10' fill='none' stroke='white' stroke-width='10'/><line x1='48' y1='88' x2='144' y2='88' stroke='white' stroke-width='10'/><line x1='74' y1='42' x2='74' y2='68' stroke='white' stroke-width='10' stroke-linecap='round'/><line x1='118' y1='42' x2='118' y2='68' stroke='white' stroke-width='10' stroke-linecap='round'/></svg>";
+(function injectManifest() {
+  try {
+    const manifest = {
+      name: '智能日程助手', short_name: '日程助手', description: '本地智能日程助手',
+      start_url: '.', scope: '.', display: 'standalone',
+      background_color: '#f4f6fb', theme_color: '#2d6cdf',
+      icons: [{ src: 'data:image/svg+xml,' + encodeURIComponent(SVG_ICON), sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    const link = document.createElement('link'); link.rel = 'manifest'; link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+    const al = document.createElement('link'); al.rel = 'apple-touch-icon'; al.href = 'data:image/svg+xml,' + encodeURIComponent(SVG_ICON);
+    document.head.appendChild(al);
+  } catch (e) {}
+})();
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; $('install-btn').textContent = '安装到桌面'; });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; $('install-btn').style.display = 'none'; showToast('✅ 已安装到桌面'); });
+function openInstallGuide() {
+  const t = $('install-guide-text');
+  const isLocal = location.protocol === 'file:';
+  const isLAN = /^https?:\/\/(192\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/.test(location.href);
+  if (isLocal) {
+    t.innerHTML = '当前是手机<b>本地文件</b>，自带浏览器不允许直接加到桌面。请：<br>① 手机装 <b>Chrome</b>；<br>② 文件管理找到 index.html → 选「用 Chrome 打开」；<br>③ Chrome 右上角 ⋮ → <b>添加到主屏幕</b>。这样离线也能用。';
+  } else if (isLAN) {
+    t.innerHTML = '当前是电脑<b>局域网地址</b>，自带浏览器可能禁用添加。请：<br>① 手机用 <b>Chrome</b> 打开同一地址（' + location.host + '）；<br>② 右上角 ⋮ → <b>添加到主屏幕</b>。<br>注意：此方式需电脑保持开机运行。';
+  } else {
+    t.innerHTML = '请使用浏览器菜单的「添加到主屏幕 / 添加到桌面」，或用 Chrome 打开本页后点 ⋮ → 添加到主屏幕。';
+  }
+  $('install-modal').style.display = 'flex';
+}
+$('install-btn').onclick = async () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch (e) {}
+    deferredPrompt = null; $('install-btn').style.display = 'none';
+  } else { openInstallGuide(); }
+};
+$('install-close-btn').onclick = () => { $('install-modal').style.display = 'none'; };
+$('copy-link-btn').onclick = async () => {
+  try { await navigator.clipboard.writeText(location.href); showToast('✅ 链接已复制，去 Chrome 粘贴打开'); }
+  catch (e) { showToast('复制失败，请手动复制地址栏：' + location.href); }
+  $('install-modal').style.display = 'none';
+};
+
+// 到点提醒轮询
+function checkReminders() {
+  const now = Date.now();
+  for (const t of TODOS) {
+    if (t.status === 'done' || !t.reminder || !t.due || t.reminder_fired) continue;
+    const d = Date.parse(t.due.replace(' ', 'T')); if (isNaN(d)) continue;
+    const fireAt = d - (t.reminder_offset || 0) * 60000;
+    if (now >= fireAt && !notified.has(t.id)) {
+      notified.add(t.id);
+      sendNotification('⏰ 智能日程助手提醒', t.title + (t.due ? '（' + t.due + '）' : ''));
+      updateTodo(t.id, { reminder_fired: true });
+    }
+  }
+}
+
+// ===================== 启动 =====================
+(function init() {
+  try { applyTheme(localStorage.getItem(LS_THEME) || 'standard'); } catch (e) {}
+  loadAll(); loadSettings(); loadState(); renderTodos();
+  checkReminders(); setInterval(checkReminders, 30000);
+})();
+</script>
+</body>
+</html>
