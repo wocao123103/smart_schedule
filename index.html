@@ -1182,7 +1182,7 @@ function renderSidebar() {
       <span class="brand-icon">${icon('brain', 22)}</span>
       <div class="grow">
         <h1 class="aurora-text">智能日程助手</h1>
-        <p>AI 驱动的日程管理 · v2.2.0</p>
+        <p>AI 驱动的日程管理 · v2.2.1</p>
       </div>
     </div>
     <div class="theme-wrap">
@@ -1742,7 +1742,7 @@ function renderSettings() {
     <div class="drawer-head"><div class="flex-center"><span class="brand-icon" style="width:36px;height:36px;border-radius:11px;background:var(--surface-2);box-shadow:none;color:var(--cyan)">${icon('settings', 18)}</span><div><h2>设置</h2><p class="hint" style="margin:3px 0 0">大模型 · 周历 · 提醒 · 外观 · 导出</p></div></div><button class="icon-btn" data-act="close-modal" aria-label="关闭">${icon('x', 17)}</button></div>
     <div class="drawer-tabs">${tabs.map(([k, label, ic]) => `<button class="pill ${tab === k ? 'active' : ''}" data-act="settings-tab" data-tab="${k}">${icon(ic, 13)} ${label}</button>`).join('')}</div>
     <div class="drawer-body">${body}</div>
-    <div class="drawer-foot">密钥只保存在本机浏览器 · 数据不上传服务器 · v2.2.0</div>
+    <div class="drawer-foot">密钥只保存在本机浏览器 · 数据不上传服务器 · v2.2.1</div>
   </div></div>`;
 }
 function renderSettingsAI() {
@@ -1775,6 +1775,7 @@ function renderSettingsReminder() {
   return `<div class="setting-item"><h4>${icon('calendar', 14)} 导出到系统日历</h4>
     <p>不再由网页在后台弹提醒。导出 .ics 后交给手机/电脑的本地日历，由系统负责通知；导入时系统会请求你手动允许。</p>
     <button class="btn btn-primary btn-sm" style="width:100%;margin-top:8px" data-act="export-ical" data-range="all" data-open="1">${icon('calendar', 13)} 导出并打开系统日历（全部）</button>
+    <p class="hint" style="margin-top:6px">每次导出自动编号：A1、A2…A100000 后 B1；下一次后缀：<b>${typeof icsNextLabel === 'function' ? icsNextLabel() : 'A1'}</b></p>
     <div class="form-grid" style="margin-top:7px">
       <button class="btn btn-ghost btn-sm" data-act="export-ical" data-range="all" data-open="0">全部未完成 .ics</button>
       <button class="btn btn-ghost btn-sm" data-act="export-ical" data-range="today" data-open="0">今天 .ics</button>
@@ -1810,7 +1811,7 @@ function renderSettingsExport() {
     <button class="btn btn-ghost btn-sm" style="width:100%" data-act="export-ical" data-range="all" data-open="1">${icon('calendar', 12)} 导出系统日历提醒（.ics）</button>
   </div>
   <div class="setting-item"><h4>${icon('upload', 13)} 导入</h4><p>支持 JSON、CSV、TXT、Markdown、Word、Excel；图片可走 AI 视觉识别。</p><button class="btn btn-primary btn-sm" data-act="open-import">${icon('upload', 12)} 打开导入</button></div>
-  <div class="info-box">数据 ${state.todos.length} 条 · 版本 v2.2.0 · 图片/PDF/Office 解析库按需加载</div>`;
+  <div class="info-box">数据 ${state.todos.length} 条 · 版本 v2.2.1 · 图片/PDF/Office 解析库按需加载</div>`;
 }
 function renderSettingsHelp() {
   const shots = getAssets().tutorial || [];
@@ -3059,8 +3060,28 @@ function buildICS(range) {
   lines.push('END:VCALENDAR');
   return { text: lines.map(icsFold).join('\r\n') + '\r\n', count };
 }
+/* 每次导出递增：A1…A100000 → B1…B100000 → …；编号存本机，刷新不清零 */
+const ICS_SEQ_KEY = 'ss_ics_seq_v1';
+function icsSeqLabel(n) {
+  n = Math.max(1, Math.floor(Number(n) || 1));
+  let group = Math.floor((n - 1) / 100000);
+  let letters = '';
+  do {
+    letters = String.fromCharCode(65 + (group % 26)) + letters;
+    group = Math.floor(group / 26) - 1;
+  } while (group >= 0);
+  return letters + (((n - 1) % 100000) + 1);
+}
+function icsReadSeq() { return Math.max(0, Math.floor(Number(storageGet(ICS_SEQ_KEY)) || 0)); }
+function icsNextLabel() { return icsSeqLabel(icsReadSeq() + 1); }
+function icsNextSequence() {
+  const n = icsReadSeq() + 1;
+  storageSet(ICS_SEQ_KEY, String(n));
+  return icsSeqLabel(n);
+}
 function icsFilename(range) {
-  return '智能日程助手-' + (range === 'today' ? '今天' : range === 'week' ? '本周' : '全部') + '.ics';
+  const rangeLabel = range === 'today' ? '今天' : range === 'week' ? '本周' : '全部';
+  return '智能日程助手-' + rangeLabel + '-' + icsNextSequence() + '.ics';
 }
 function icsDownload(text, filename) {
   const blob = new Blob([text], { type: 'text/calendar;charset=utf-8' });
