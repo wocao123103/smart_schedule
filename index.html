@@ -192,30 +192,116 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .hint{font-size:.85em;color:var(--muted);margin:8px 0;line-height:1.6;}
 
+  /* ============ 移动端框架（桌面隐藏） ============ */
+  .mobile-topbar,.mobile-bottomnav,.mfab,#drawer-overlay{display:none;}
+
+  /* ============ 弹窗 / 闹钟 ============ */
+  .modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,4,12,.68);backdrop-filter:blur(5px);}
+  .modal[hidden]{display:none;}
+  .modal-box{width:min(620px,94vw);max-height:88vh;overflow:auto;background:linear-gradient(180deg,#1e1b30,#141220);border:1px solid rgba(155,123,255,.32);border-radius:18px;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.55);}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .modal-head h3{margin:0;font-size:17px;}
+  .modal-x{background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:9px;font-size:18px;line-height:1;}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);position:sticky;bottom:0;background:#141220;flex-wrap:wrap;}
+  .alarm-overlay{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(8,5,18,.84);backdrop-filter:blur(7px);}
+  .alarm-overlay[hidden]{display:none;}
+  body.alarm-open{overflow:hidden;}
+  .alarm-card{width:min(430px,92vw);text-align:center;background:linear-gradient(180deg,rgba(124,92,252,.28),rgba(20,18,32,.98));border:1px solid rgba(155,123,255,.5);border-radius:22px;padding:26px 22px;box-shadow:0 30px 90px rgba(0,0,0,.6);animation:alarmPulse 1.8s ease-in-out infinite;}
+  @keyframes alarmPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.015);}}
+  .alarm-ic{font-size:54px;line-height:1;margin-bottom:6px;}
+  .alarm-card h2{margin:6px 0;font-size:21px;}
+  .alarm-card p{color:#d8d2ee;line-height:1.6;margin:8px 0 18px;word-break:break-all;white-space:pre-line;}
+  .alarm-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+  /* ============ 通知自检 ============ */
+  .diag{display:flex;flex-direction:column;gap:6px;margin:10px 0;}
+  .diag-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 11px;border:1px solid var(--border);border-radius:9px;background:rgba(255,255,255,.03);font-size:12.5px;line-height:1.45;}
+  .diag-row b{font-weight:600;color:var(--muted);flex-shrink:0;}
+  .diag-row span{text-align:right;word-break:break-all;}
+  .ok{color:var(--b-done);} .bad{color:var(--b-high);} .warn{color:var(--b-mid);}
+
   @media(max-width:820px){
-    body{flex-direction:column;}
-    .sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border);flex-direction:column;}
-    .side-nav{flex-direction:row;flex-wrap:wrap;}
-    .tab-btn{flex:1 1 auto;min-width:80px;justify-content:center;}
-    .side-actions{flex-direction:row;flex-wrap:wrap;}
-    .side-actions button{flex:1 1 auto;min-width:110px;justify-content:center;}
-    .side-foot{flex-direction:row;flex-wrap:wrap;}
-    .side-mini{flex:1;}
-    .main{padding:14px;}
-    .todo-grid{grid-template-columns:1fr;}
-    .board-cols{grid-template-columns:1fr;}
+    body{flex-direction:column;overflow-x:hidden;}
+
+    /* 顶部固定栏 */
+    .mobile-topbar{
+      display:flex;align-items:center;gap:10px;position:fixed;top:0;left:0;right:0;z-index:55;
+      height:calc(58px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 12px 0;
+      background:rgba(12,11,20,.90);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
+    }
+    .mobile-topbar .mt-menu,.mobile-topbar .mt-bell{width:42px;height:42px;flex-shrink:0;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--text);font-size:19px;line-height:1;}
+    .mobile-topbar .mt-title{flex:1;min-width:0;font-weight:800;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .mobile-topbar .mt-bell{position:relative;}
+    .mobile-topbar .mt-bell.on{color:var(--b-done);border-color:rgba(74,222,128,.45);}
+    .mobile-topbar .mt-bell .ndot{position:absolute;top:7px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--b-done);box-shadow:0 0 6px var(--b-done);}
+
+    /* 侧栏变抽屉 */
+    .sidebar{
+      position:fixed;top:0;left:0;width:280px;max-width:86vw;height:100dvh;z-index:70;
+      padding:14px 12px calc(14px + env(safe-area-inset-bottom));overflow-y:auto;
+      transform:translateX(-105%);transition:transform .25s ease;border-right:1px solid var(--border);
+      box-shadow:18px 0 60px rgba(0,0,0,.5);
+    }
+    .sidebar.open{transform:none;}
+    #drawer-overlay{display:block;position:fixed;inset:0;z-index:65;background:rgba(0,0,0,.58);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .2s;}
+    #drawer-overlay.show{opacity:1;pointer-events:auto;}
+    body.drawer-open{overflow:hidden;}
+    .side-nav{flex-direction:column;flex-wrap:nowrap;}
+    .tab-btn{flex:none;min-width:0;justify-content:flex-start;}
+    .side-actions{flex-direction:column;flex-wrap:nowrap;}
+    .side-actions button{flex:none;min-width:0;justify-content:flex-start;}
+    .side-foot{flex-direction:column;flex-wrap:nowrap;}
+    .side-mini{flex:none;}
+
+    /* 主区留出顶栏/底栏空间 */
+    .main{padding:calc(74px + env(safe-area-inset-top)) 14px calc(140px + env(safe-area-inset-bottom));max-width:none;}
+    .banner{padding:15px;gap:12px;}
+    .banner h2{font-size:19px;}
+    .banner p{font-size:12.5px;}
+    .banner .banner-btn{width:100%;padding:11px 16px;}
+    .todo-grid,.board-cols{grid-template-columns:1fr;}
+    .field-row{flex-direction:column;gap:8px;}
+    .field-row>div{min-width:0;}
+    .filter-row select{flex:1 1 46%;min-width:0;}
+    .search-row{position:relative;}
+    .cal-cell{min-height:52px;padding:4px;font-size:12px;}
+    .modal-box{width:94vw;max-height:86dvh;padding:15px;}
+
+    /* 底部导航 */
+    .mobile-bottomnav{
+      display:grid;grid-template-columns:repeat(5,1fr);gap:2px;position:fixed;left:0;right:0;bottom:0;z-index:50;
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+      background:rgba(12,11,20,.93);border-top:1px solid var(--border);backdrop-filter:blur(14px);
+    }
+    .mnav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:transparent;border:none;color:var(--muted);font-size:11px;padding:5px 2px;border-radius:10px;min-height:48px;}
+    .mnav-btn .mi{font-size:18px;line-height:1.1;}
+    .mnav-btn.active{color:#fff;background:linear-gradient(180deg,rgba(124,92,252,.30),rgba(124,92,252,.10));}
+    .mfab{
+      display:flex;align-items:center;justify-content:center;position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:51;
+      width:54px;height:54px;border-radius:50%;border:none;color:#fff;font-size:28px;line-height:1;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 10px 30px rgba(124,92,252,.5);
+    }
+    .mfab:active{transform:scale(.96);}
   }
 </style>
 </head>
 <body class="theme-standard">
 
+  <!-- 移动端顶部栏 -->
+  <header class="mobile-topbar">
+    <button class="mt-menu" id="drawer-toggle" aria-label="打开菜单" aria-expanded="false">☰</button>
+    <div class="mt-title" id="mt-title">智能日程助手</div>
+    <button class="mt-bell" id="m-notify" aria-label="通知设置">🔔<span class="ndot" id="m-notify-dot" style="display:none"></span></button>
+  </header>
+  <div id="drawer-overlay"></div>
+
   <!-- ============ 左侧边栏 ============ -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="logo">
       <div class="logo-ic">🗓️</div>
       <div>
         <h1>智能日程助手</h1>
-        <div class="sub">AI 驱动的日程管理</div>
+        <div class="sub">AI 驱动的日程管理 · v1.3</div>
       </div>
     </div>
 
@@ -414,6 +500,18 @@
     <section id="settings" class="tab-panel">
       <h3 class="sec">设置（AI 接入）</h3>
       <div class="card">
+        <h3 class="sec">🔔 通知与提醒自检</h3>
+        <p class="hint">系统通知需要同时满足：<b>https 安全地址</b> + 浏览器支持 Notification + 用户授权。任一项不满足时，到点会自动弹出<b>全屏闹钟 + 声音 + 震动</b>（只要页面还开着就不会漏）。</p>
+        <div id="notify-diag" class="diag"></div>
+        <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="notify-enable2" type="button">启用系统通知</button>
+          <button class="btn ghost" id="notify-test" type="button">发送测试提醒</button>
+          <button class="btn ghost" id="notify-alarm-test" type="button">测试全屏闹钟</button>
+        </div>
+        <p class="hint" id="notify-advice"></p>
+      </div>
+
+      <div class="card">
         <form id="settings-form">
           <label>服务商预设（选完会自动填 Base URL / 模型，可手动改）
             <select id="s-provider">
@@ -460,6 +558,67 @@
       </div>
     </section>
   </main>
+
+  <!-- 移动端底部导航 -->
+  <nav class="mobile-bottomnav" aria-label="主导航">
+    <button class="mnav-btn active" data-tab="todos"><span class="mi">📋</span>列表</button>
+    <button class="mnav-btn" data-tab="calendar"><span class="mi">📅</span>日历</button>
+    <button class="mnav-btn" data-tab="board"><span class="mi">🗂️</span>看板</button>
+    <button class="mnav-btn" data-tab="stats"><span class="mi">📊</span>统计</button>
+    <button class="mnav-btn" data-tab="trash"><span class="mi">🗑️</span>回收站</button>
+  </nav>
+  <button class="mfab" id="mfab-new" aria-label="新建日程">＋</button>
+
+  <!-- 编辑日程弹窗 -->
+  <div id="edit-modal" class="modal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+      <div class="modal-head"><h3 id="edit-title">编辑日程</h3><button class="modal-x" id="edit-close" aria-label="关闭">×</button></div>
+      <form id="edit-form">
+        <label>标题<input type="text" id="e-title" required></label>
+        <div class="field-row">
+          <div><label>时间<input type="text" id="e-due" placeholder="如 2026-10-31 18:00"></label></div>
+          <div><label>状态
+            <select id="e-status"><option value="todo">待办</option><option value="in_progress">进行中</option><option value="done">已完成</option></select>
+          </label></div>
+        </div>
+        <div class="field-row">
+          <div><label>优先级
+            <select id="e-priority"><option value="1">高</option><option value="2">中</option><option value="3">低</option></select>
+          </label></div>
+          <div><label>体量
+            <select id="e-scale"><option value="1">小</option><option value="2">中</option><option value="3">大</option></select>
+          </label></div>
+        </div>
+        <div class="field-row">
+          <div><label>项目<input type="text" id="e-project" placeholder="如 论文 / 社团"></label></div>
+          <div><label>地点<input type="text" id="e-location" placeholder="如 综合教学楼 153"></label></div>
+        </div>
+        <label>标签（逗号分隔）<input type="text" id="e-tags"></label>
+        <label>备注<textarea id="e-note" rows="2"></textarea></label>
+        <div class="field-row">
+          <div><label style="font-weight:600"><input type="checkbox" id="e-reminder"> 到点提醒</label></div>
+          <div><label>提前分钟<input type="number" id="e-offset" min="0" value="0"></label></div>
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="btn ghost" id="edit-cancel">取消</button>
+          <button type="submit" class="btn">保存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 全屏提醒闹钟（系统通知不可用时的兜底） -->
+  <div id="alarm" class="alarm-overlay" hidden>
+    <div class="alarm-card" role="alertdialog" aria-modal="true" aria-labelledby="alarm-title">
+      <div class="alarm-ic">⏰</div>
+      <h2 id="alarm-title">日程提醒</h2>
+      <p id="alarm-body"></p>
+      <div class="alarm-actions">
+        <button class="btn ghost" id="alarm-snooze">稍后 5 分钟</button>
+        <button class="btn" id="alarm-ok">知道了</button>
+      </div>
+    </div>
+  </div>
 
   <div id="toast" class="toast"></div>
 
@@ -516,9 +675,9 @@ function addTodo(p) {
   TODOS.push(t); saveTodos(); return t;
 }
 function findTodo(id) { return TODOS.find(x => x.id === id); }
-function updateTodo(id, patch) { const t = findTodo(id); if (!t) return null; Object.assign(t, patch); t.updated_at = Date.now(); saveTodos(); return t; }
+function updateTodo(id, patch) { const t = findTodo(id); if (!t) return null; Object.assign(t, patch); if (patch && patch.reminder_fired === false) notified.delete(id); t.updated_at = Date.now(); saveTodos(); return t; }
 function softDelete(id) { const t = findTodo(id); if (!t) return; t.deleted = true; saveTodos(); TODOS = TODOS.filter(x => x.id !== id); TRASH.push(t); }
-function restoreTodo(id) { const t = TRASH.find(x => x.id === id); if (!t) return; t.deleted = false; t.reminder_fired = false; TODOS.push(t); TRASH = TRASH.filter(x => x.id !== id); saveTodos(); }
+function restoreTodo(id) { const t = TRASH.find(x => x.id === id); if (!t) return; t.deleted = false; t.reminder_fired = false; notified.delete(id); TODOS.push(t); TRASH = TRASH.filter(x => x.id !== id); saveTodos(); }
 function purge(id) { TRASH = TRASH.filter(x => x.id !== id); saveTodos(); }
 function emptyTrash() { TRASH = []; saveTodos(); }
 function loadState() {
@@ -526,22 +685,51 @@ function loadState() {
   if (tb) tb.innerHTML = '<span class="ic">🗑️</span>' + (TRASH.length > 0 ? `回收站(${TRASH.length})` : '回收站');
 }
 
-// ===================== 标签页切换 =====================
+// ===================== 标签页切换（桌面侧栏 + 移动端底栏共用） =====================
 let currentTab = 'todos';
-function switchTo(tab) { const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`); if (btn) btn.click(); }
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    currentTab = btn.dataset.tab;
-    $(currentTab).classList.add('active');
-    if (currentTab === 'board') renderBoard();
-    if (currentTab === 'calendar') renderCalendar();
-    if (currentTab === 'stats') renderStats();
-    if (currentTab === 'trash') loadTrash();
-  });
+const TAB_TITLES = { todos:'日程列表', calendar:'日历', board:'看板', stats:'统计', trash:'回收站', agent:'日程 Agent', ai:'AI 助手', settings:'设置' };
+
+function activateTab(tab) {
+  if (!$(tab)) return;
+  currentTab = tab;
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === tab));
+  const mt = $('mt-title'); if (mt) mt.textContent = TAB_TITLES[tab] || '智能日程助手';
+  if (tab === 'board') renderBoard();
+  if (tab === 'calendar') renderCalendar();
+  if (tab === 'stats') renderStats();
+  if (tab === 'trash') loadTrash();
+  if (tab === 'settings') { loadSettings(); updateNotifyDiag(); updateNotifyDot(); }
+  closeDrawer();
+  try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+}
+document.querySelectorAll('[data-tab]').forEach(btn => {
+  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
 });
+function switchTo(tab) { activateTab(tab); }
+
+// ===================== 移动端抽屉 =====================
+function openDrawer() {
+  const sb = $('sidebar'), ov = $('drawer-overlay'), tg = $('drawer-toggle');
+  if (!sb) return;
+  sb.classList.add('open'); if (ov) ov.classList.add('show');
+  document.body.classList.add('drawer-open');
+  if (tg) tg.setAttribute('aria-expanded', 'true');
+}
+function closeDrawer() {
+  const sb = $('sidebar'), ov = $('drawer-overlay'), tg = $('drawer-toggle');
+  if (sb) sb.classList.remove('open');
+  if (ov) ov.classList.remove('show');
+  document.body.classList.remove('drawer-open');
+  if (tg) tg.setAttribute('aria-expanded', 'false');
+}
+$('drawer-toggle').onclick = () => {
+  const sb = $('sidebar');
+  if (sb && sb.classList.contains('open')) closeDrawer(); else openDrawer();
+};
+$('drawer-overlay').onclick = closeDrawer;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDrawer(); hideAlarm(); closeEdit(); } });
+$('mfab-new').onclick = () => { activateTab('todos'); setTimeout(() => { const f = $('f-title'); if (f) f.focus(); }, 80); };
 
 // ===================== 列表视图 + 筛选 =====================
 let filters = { q: '', status: 'all', priority: 0, project: '', tag: '' };
@@ -578,6 +766,7 @@ function todoCard(t) {
     </div>
     <div class="actions">
       <button onclick="cycleStatus('${t.id}')">状态切换</button>
+      <button onclick="openEdit('${t.id}')">编辑</button>
       <button onclick="delTodo('${t.id}')">删除</button>
     </div>
   </div>`;
@@ -608,6 +797,55 @@ async function delTodo(id) {
   softDelete(id); renderTodos(); loadState();
 }
 
+// ===================== 编辑日程 =====================
+let editingId = null;
+function openEdit(id) {
+  const t = findTodo(id); if (!t) return;
+  editingId = id;
+  $('e-title').value = t.title || '';
+  $('e-due').value = t.due || '';
+  $('e-status').value = t.status || 'todo';
+  $('e-priority').value = String(t.priority || 2);
+  $('e-scale').value = String(t.scale || 2);
+  $('e-project').value = t.project || '';
+  $('e-location').value = t.location || '';
+  $('e-tags').value = (t.tags || []).join(',');
+  $('e-note').value = t.note || '';
+  $('e-reminder').checked = !!t.reminder;
+  $('e-offset').value = t.reminder_offset || 0;
+  $('edit-modal').hidden = false;
+  setTimeout(() => { try { $('e-title').focus(); } catch (e) {} }, 60);
+}
+function closeEdit() { const m = $('edit-modal'); if (m) m.hidden = true; editingId = null; }
+$('edit-close').onclick = closeEdit;
+$('edit-cancel').onclick = closeEdit;
+$('edit-modal').addEventListener('click', (e) => { if (e.target === $('edit-modal')) closeEdit(); });
+$('edit-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!editingId) return;
+  const tags = $('e-tags').value.split(',').map(s => s.trim()).filter(Boolean);
+  updateTodo(editingId, {
+    title: $('e-title').value.trim() || '未命名日程',
+    due: $('e-due').value.trim() || null,
+    status: $('e-status').value,
+    priority: parseInt($('e-priority').value, 10) || 2,
+    scale: parseInt($('e-scale').value, 10) || 2,
+    project: $('e-project').value.trim(),
+    location: $('e-location').value.trim(),
+    tags,
+    note: $('e-note').value,
+    reminder: $('e-reminder').checked,
+    reminder_offset: parseInt($('e-offset').value, 10) || 0,
+    reminder_fired: false
+  });
+  notified.delete(editingId);
+  closeEdit();
+  renderTodos(); loadState();
+  if (currentTab === 'board') renderBoard();
+  if (currentTab === 'calendar') renderCalendar();
+  showToast('✅ 日程已更新');
+});
+
 // 状态药丸筛选
 document.querySelectorAll('#status-chips .chip').forEach(ch => {
   ch.addEventListener('click', () => {
@@ -635,6 +873,7 @@ function renderBoard() {
           ${t.location ? `<span class="badge b-loc">◎ ${escapeHtml(t.location)}</span>` : ''}
           ${t.project ? `<span class="badge b-proj">${escapeHtml(t.project)}</span>` : ''}</div>
         <div class="actions"><button onclick="cycleStatus('${t.id}')">切换</button>
+        <button onclick="openEdit('${t.id}')">编辑</button>
         <button onclick="delTodo('${t.id}')">删</button></div>
       </div>`).join('');
     return `<div class="kanban-col"><h3>${STATUS[s]} (${cols[s].length})</h3>${items || '<p class="muted">空</p>'}</div>`;
@@ -1004,10 +1243,10 @@ function exportWeekImage() {
 // 边栏动作
 $('btn-new').onclick = () => { switchTo('todos'); setTimeout(() => { if ($('f-title')) $('f-title').focus(); }, 60); };
 $('banner-new').onclick = () => { switchTo('todos'); setTimeout(() => { if ($('f-title')) $('f-title').focus(); }, 60); };
-$('btn-import').onclick = () => $('file-input').click();
-$('btn-json').onclick = exportJson;
-$('btn-ical').onclick = exportIcal;
-$('btn-week').onclick = exportWeekImage;
+$('btn-import').onclick = () => { closeDrawer(); $('file-input').click(); };
+$('btn-json').onclick = () => { closeDrawer(); exportJson(); };
+$('btn-ical').onclick = () => { closeDrawer(); exportIcal(); };
+$('btn-week').onclick = () => { closeDrawer(); exportWeekImage(); };
 $('batch-btn').onclick = () => switchTo('agent');
 
 // ===================== 主题 =====================
@@ -1018,42 +1257,219 @@ function applyTheme(th) {
 }
 $('theme-select').addEventListener('change', (e) => applyTheme(e.target.value));
 
-// ===================== 移动端通知 =====================
-function showToast(text) {
-  const t = $('toast'); t.textContent = text; t.classList.add('show');
-  clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.remove('show'), 4000);
+// ===================== 通知 / 到点提醒 =====================
+let swReg = null;
+let audioCtx = null;
+let alarmTodoId = null;
+
+function showToast(text, ms) {
+  const t = $('toast'); if (!t) return;
+  t.textContent = text; t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), ms || 4200);
 }
-function updateNotifyDot() {
-  const dot = $('notify-dot'); if (!dot) return;
-  const p = ('Notification' in window) ? Notification.permission : 'denied';
-  dot.style.display = (p === 'granted') ? 'inline-block' : 'none';
-  const btn = $('notify-btn'); if (btn) btn.classList.toggle('on', p === 'granted');
+function isSecureCtx() {
+  return window.isSecureContext === true || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 }
-async function sendNotification(title, body) {
+function isFileMode() { return location.protocol === 'file:'; }
+function notifSupported() { return typeof window.Notification !== 'undefined'; }
+function notifPermission() {
+  try { return notifSupported() ? Notification.permission : 'unsupported'; } catch (e) { return 'unsupported'; }
+}
+
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator) || !isSecureCtx() || isFileMode()) return null;
   try {
-    if ('Notification' in window && Notification.permission === 'granted') { new Notification(title, { body }); return; }
-  } catch (e) {}
-  showToast('🔔 ' + title + (body ? '：' + body : ''));
+    const reg = await navigator.serviceWorker.register('sw.js', { scope: './' });
+    swReg = reg;
+    updateNotifyDiag(); updateNotifyDot();
+    // ready 可能要等激活，单独等待，不阻塞 UI
+    navigator.serviceWorker.ready.then((r) => { swReg = r; updateNotifyDiag(); updateNotifyDot(); }).catch(() => {});
+    return reg;
+  } catch (e) {
+    console.warn('Service Worker 注册失败（系统通知兜底仍可用）：', e && e.message);
+    return null;
+  }
 }
-$('notify-btn').onclick = async () => {
-  if (!('Notification' in window)) { showToast('当前环境不支持系统通知，将使用页面内提醒'); return; }
-  let perm = 'default';
-  try { perm = await Notification.requestPermission(); } catch (e) {}
-  if (perm === 'granted') showToast('✅ 通知已启用，到点会提醒你');
-  else showToast('⚠️ 系统通知未授权，已启用页面内提醒（建议用 https 地址访问以解锁系统通知）');
-  updateNotifyDot();
+async function ensureSW() {
+  if (swReg) return swReg;
+  if (!('serviceWorker' in navigator) || !isSecureCtx() || isFileMode()) return null;
+  try { const r = await navigator.serviceWorker.getRegistration(); if (r) { swReg = r; return r; } } catch (e) {}
+  return initServiceWorker();
+}
+
+async function enableNotifications() {
+  if (isFileMode()) {
+    updateNotifyDiag();
+    showToast('本地文件（file://）模式下浏览器通常禁止系统通知；部署到 https 后再试。已启用全屏闹钟兜底');
+    return 'file';
+  }
+  if (!isSecureCtx()) {
+    updateNotifyDiag();
+    showToast('当前不是 https 安全地址，浏览器不允许系统通知；已启用全屏闹钟兜底');
+    return 'insecure';
+  }
+  if (!notifSupported()) {
+    updateNotifyDiag();
+    showToast('当前浏览器不支持系统通知；已启用全屏闹钟 + 声音 + 震动兜底');
+    return 'unsupported';
+  }
+  let perm = notifPermission();
+  if (perm !== 'granted') {
+    try { perm = await Notification.requestPermission(); } catch (e) { perm = 'denied'; }
+  }
+  updateNotifyDiag(); updateNotifyDot();
+  if (perm === 'granted') {
+    await ensureSW();
+    updateNotifyDiag();
+    showToast('✅ 系统通知已启用，到点会提醒你');
+  } else {
+    showToast('⚠️ 未获得系统通知权限，已启用全屏闹钟兜底（可在浏览器站点设置中重新允许）');
+  }
+  return perm;
+}
+
+async function sendSystemNotification(title, body) {
+  if (notifPermission() !== 'granted') return false;
+  const reg = await ensureSW();
+  if (reg && typeof reg.showNotification === 'function') {
+    try {
+      await reg.showNotification(title, { body: body || '', tag: 'ss-reminder', renotify: true, silent: false });
+      return true;
+    } catch (e) { console.warn('Service Worker 通知失败：', e && e.message); }
+  }
+  try { new Notification(title, { body: body || '', tag: 'ss-reminder' }); return true; }
+  catch (e) { console.warn('Notification 构造失败：', e && e.message); }
+  return false;
+}
+
+function playAlarmSound() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = audioCtx || new AC();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+    [0, 0.34, 0.68].forEach((off, i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = i === 2 ? 1046 : 880;
+      g.gain.setValueAtTime(0.0001, now + off);
+      g.gain.exponentialRampToValueAtTime(0.22, now + off + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + off + 0.27);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(now + off); o.stop(now + off + 0.3);
+    });
+  } catch (e) {}
+  try { if (navigator.vibrate) navigator.vibrate([220, 110, 220, 110, 420]); } catch (e) {}
+}
+
+// 首次任意点击时解锁音频，保证到点能响
+document.addEventListener('pointerdown', function unlockAudio() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) { audioCtx = audioCtx || new AC(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+  } catch (e) {}
+}, { once: true });
+
+function showAlarm(title, body, todoId) {
+  alarmTodoId = todoId || null;
+  const cleanTitle = String(title || '日程提醒').replace(/^[\s⏰🔔]+/, '') || '日程提醒';
+  $('alarm-title').textContent = cleanTitle;
+  $('alarm-body').textContent = body || '';
+  $('alarm').hidden = false;
+  document.body.classList.add('alarm-open');
+  playAlarmSound();
+  try { window.focus(); } catch (e) {}
+}
+function hideAlarm() {
+  const a = $('alarm'); if (a) a.hidden = true;
+  alarmTodoId = null;
+  document.body.classList.remove('alarm-open');
+}
+$('alarm-ok').onclick = hideAlarm;
+$('alarm-snooze').onclick = () => {
+  const title = $('alarm-title').textContent;
+  const body = $('alarm-body').textContent;
+  const id = alarmTodoId;
+  hideAlarm();
+  setTimeout(() => showAlarm(title, body, id), 5 * 60 * 1000);
+  showToast('已稍后提醒：5 分钟后再次弹出');
 };
 
+async function notifyReminder(title, body, todoId) {
+  const ok = await sendSystemNotification(title, body);
+  if (!ok) showAlarm(title, body, todoId);
+  else showToast('🔔 ' + title);
+  return ok;
+}
+
+function updateNotifyDot() {
+  const p = notifPermission();
+  const granted = p === 'granted';
+  const dot = $('notify-dot'); if (dot) dot.style.display = granted ? 'inline-block' : 'none';
+  const btn = $('notify-btn'); if (btn) btn.classList.toggle('on', granted);
+  const bell = $('m-notify'); if (bell) bell.classList.toggle('on', granted);
+  const mdot = $('m-notify-dot'); if (mdot) mdot.style.display = granted ? 'inline-block' : 'none';
+}
+
+function updateNotifyDiag() {
+  const box = $('notify-diag'); if (!box) return;
+  const fileMode = isFileMode();
+  const secure = isSecureCtx() && !fileMode;
+  const sup = notifSupported();
+  const perm = notifPermission();
+  const swSupported = 'serviceWorker' in navigator;
+  const swReady = !!swReg;
+  const ua = navigator.userAgent || '';
+  const browser = /MicroMessenger/i.test(ua) ? '微信内置浏览器'
+    : /QQBrowser/i.test(ua) ? 'QQ 浏览器'
+    : /EdgA?\//i.test(ua) ? 'Edge'
+    : /Chrome\//i.test(ua) ? 'Chrome'
+    : /Safari\//i.test(ua) ? 'Safari'
+    : '当前浏览器';
+  const row = (k, v, cls) => `<div class="diag-row"><b>${k}</b><span class="${cls || ''}">${v}</span></div>`;
+  box.innerHTML =
+    row('访问地址', fileMode ? '⚠️ file:// 本地文件（浏览器通常禁止通知）' : secure ? '✅ https / 安全上下文' : '❌ 非 https，浏览器禁止系统通知', fileMode ? 'warn' : secure ? 'ok' : 'bad') +
+    row('浏览器', browser + (sup ? '（支持 Notification）' : '（不支持 Notification）'), sup ? 'ok' : 'bad') +
+    row('通知权限', perm === 'granted' ? '✅ 已允许' : perm === 'denied' ? '❌ 已拒绝（需到站点设置里改）' : perm === 'unsupported' ? '❌ 浏览器不提供' : '⚠️ 未授权（点下方按钮）', perm === 'granted' ? 'ok' : perm === 'denied' || perm === 'unsupported' ? 'bad' : 'warn') +
+    row('Service Worker', swSupported ? (swReady ? '✅ 已就绪（安卓 Chrome 必需）' : '⚠️ 未注册/不可用') : '❌ 不支持', swReady ? 'ok' : swSupported ? 'warn' : 'bad') +
+    row('兜底方式', '全屏闹钟 + 声音 + 震动（页面开着就有效）', 'ok');
+  const advice = $('notify-advice');
+  if (advice) {
+    const tips = [];
+    if (fileMode) tips.push('当前是 file:// 本地文件，浏览器通常禁止系统通知；把 index.html 和 sw.js 上传到 GitHub Pages（https）后再打开。');
+    else if (!secure) tips.push('把 index.html 部署到 GitHub Pages（https）后再打开；局域网 http 也不行。');
+    if (!sup) tips.push('当前浏览器不支持系统通知，建议换 Chrome / Edge 打开同一 https 地址；QQ 浏览器、微信内置浏览器可能不支持。');
+    if (perm === 'denied') tips.push('到浏览器「设置 → 网站设置 → 通知」里把本站改为「允许」，再刷新。');
+    if (sup && secure && perm !== 'granted') tips.push('点「启用系统通知」，在弹窗里选「允许」。');
+    if (sup && secure && perm === 'granted' && !swReady) tips.push('刷新一次页面，让 Service Worker 完成注册。');
+    if (!tips.length) tips.push('系统通知已就绪。建议保持页面在后台常驻；浏览器完全关闭后无法提醒（Web 的固有限制）。');
+    advice.textContent = tips.join(' ');
+  }
+}
+
+$('notify-btn').onclick = () => { closeDrawer(); enableNotifications(); };
+$('m-notify').onclick = enableNotifications;
+$('notify-enable2').onclick = enableNotifications;
+$('notify-test').onclick = () => notifyReminder('⏰ 测试提醒', '如果你看到这条通知，说明系统通知已生效；否则会弹出全屏闹钟。', null);
+$('notify-alarm-test').onclick = () => showAlarm('⏰ 测试闹钟', '这是全屏闹钟样式；实际提醒会显示日程标题与时间。', null);
+
 // 到点提醒轮询
+function dueTs(t) {
+  if (!t.due) return NaN;
+  let s = String(t.due).trim().replace(' ', 'T');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) s += 'T23:59';
+  return Date.parse(s);
+}
 function checkReminders() {
   const now = Date.now();
-  for (const t of TODOS) {
+  for (const t of [...TODOS]) {
     if (t.status === 'done' || !t.reminder || !t.due || t.reminder_fired) continue;
-    const d = Date.parse(t.due.replace(' ', 'T')); if (isNaN(d)) continue;
+    const d = dueTs(t); if (isNaN(d)) continue;
     const fireAt = d - (t.reminder_offset || 0) * 60000;
     if (now >= fireAt && !notified.has(t.id)) {
       notified.add(t.id);
-      sendNotification('⏰ 智能日程助手提醒', t.title + (t.due ? '（' + t.due + '）' : ''));
+      notifyReminder('⏰ ' + (t.title || '日程提醒'), t.due ? '时间：' + t.due + (t.note ? '\n' + t.note : '') : (t.note || ''), t.id);
       updateTodo(t.id, { reminder_fired: true });
     }
   }
@@ -1062,8 +1478,12 @@ function checkReminders() {
 // ===================== 启动 =====================
 (function init() {
   try { applyTheme(localStorage.getItem(LS_THEME) || 'standard'); } catch (e) {}
-  loadAll(); loadSettings(); loadState(); renderTodos(); updateNotifyDot();
+  loadAll(); loadSettings(); loadState(); renderTodos(); updateNotifyDot(); updateNotifyDiag();
+  activateTab('todos');
+  initServiceWorker().then(() => { updateNotifyDiag(); updateNotifyDot(); });
   checkReminders(); setInterval(checkReminders, 30000);
+  // 每分钟刷新一次列表，让“逾期”标记和横幅数字保持最新
+  setInterval(() => { if (currentTab === 'todos') { try { renderTodos(); } catch (e) {} } }, 60000);
 })();
 </script>
 </body>
