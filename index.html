@@ -663,6 +663,24 @@ body.theme-senior .alarm-card{animation:none;border:2px solid var(--border);back
   .tut-actions .btn{min-height:34px;font-size:11px;}
 }
 
+
+    /* ===== 2026-11 同步：待录入行拖拽 / 上下移 / 撤销条 / 更大的关闭按钮 ===== */
+    .import-item .drag-handle{cursor:grab;color:var(--muted);font-size:13px;line-height:1;margin:6px 2px 0 0;user-select:none;}
+    .import-item.dragging{opacity:.5;}
+    .import-item .row-tools{display:flex;flex-direction:column;gap:4px;margin-top:4px;flex:0 0 auto;}
+    .import-item .row-tools .mini{width:26px;height:22px;padding:0;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:12px;line-height:1;cursor:pointer;}
+    .import-item .row-tools .mini:disabled{opacity:.35;cursor:default;}
+    .import-item .row-tools .mini:not(:disabled):hover{background:var(--surface-3);}
+    .import-item > span{min-width:0;overflow:hidden;}
+
+    .undo-bar{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);display:flex;align-items:center;gap:14px;padding:10px 14px 10px 18px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);box-shadow:0 18px 40px rgba(0,0,0,.55);font-size:13px;color:var(--text);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:60;}
+    .undo-bar.show{opacity:1;transform:translate(-50%,0);pointer-events:auto;}
+    .undo-bar button{border:none;border-radius:9px;padding:6px 14px;font:inherit;font-size:13px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#8b5cf6,#22d3ee);}
+
+    .drawer-head .icon-btn,.overlay .icon-btn[data-act="close-modal"]{min-width:40px;min-height:40px;display:inline-grid;place-items:center;touch-action:manipulation;}
+    @media (max-width:640px){
+        .drawer-head .icon-btn,.overlay .icon-btn[data-act="close-modal"]{min-width:46px;min-height:46px;}
+    }
 </style>
 </head>
 <body class="theme-standard">
@@ -834,7 +852,7 @@ const state = {
   searchBusy: false,
   form: null,
   formError: '',
-  ai: { text: '', parsed: [], messages: [], busy: false, error: '', result: '', engine: '', breakdown: null, task: '', summary: '', prio: null },
+  ai: { text: '', parsed: [], messages: [], chatMessages: [], busy: false, error: '', result: '', engine: '', breakdown: null, task: '', summary: '', prio: null, undoIds: [] },
   agent: { instruction: '', running: false, run: null, error: '', history: [], brief: null, pending: [], handled: {}, toast: '', startedAt: 0, timer: null, undo: null },
   imp: { mode: 'ai', text: '', parsed: [], busy: false, error: '', note: '', filename: '', skipped: 0, errors: [] }
 };
@@ -987,10 +1005,64 @@ function deadlineLabel(t) {
   return (t.startDate ? t.startDate.slice(5) + ' 起 · ' : '') + '截止 ' + t.dueDate.slice(5) + (t.dueTime ? ' ' + t.dueTime : '');
 }
 
+function resolveDateText(text) {
+  /* AI 常常回“明天 / 周五 / 3月5日 / 11.4”，这里统一换算成 YYYY-MM-DD
+     1) 没给年份 → 补当前年份
+     2) 明天 / 后天 → 以今天为基准
+     3) 周几 → 取未来最近的那天（今天就是周几则算下一周） */
+  const raw = String(text == null ? '' : text).trim();
+  if (!raw) return null;
+
+  /* 只看日期部分：把尾巴上的时间、括号里的说明切掉（"11.4 10:00（上午）" → "11.4"） */
+  const core = raw
+    .replace(/\s*\d{1,2}\s*[:：]\s*\d{2}.*$/, '')
+    .replace(/[（(][^)）]*[)）]/g, '')
+    .trim();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const pad = (n) => String(n).padStart(2, '0');
+  const iso = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const addDays = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
+  const weekdayIndex = (d) => (d.getDay() + 6) % 7;   /* 周一=0 … 周日=6 */
+
+  let m = core.match(/^(\d{4})[-/.]\s*(\d{1,2})[-/.]\s*(\d{1,2})$/);
+  if (m) return m[1] + '-' + pad(m[2]) + '-' + pad(m[3]);
+
+  m = core.match(/^(\d{1,2})\s*[-/.]\s*(\d{1,2})$/);
+  if (m) return today.getFullYear() + '-' + pad(m[1]) + '-' + pad(m[2]);
+
+  m = core.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]?/);
+  if (m) return today.getFullYear() + '-' + pad(m[1]) + '-' + pad(m[2]);
+
+  const rel = { '大后天': 3, '后天': 2, '明天': 1, '明日': 1, '今天': 0, '今日': 0 };
+  for (const key of ['大后天', '后天', '明天', '明日', '今天', '今日']) {
+    if (core.indexOf(key) >= 0) return iso(addDays(rel[key]));
+  }
+
+  const week = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7,
+                 '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7 };
+  m = core.match(/(下|这|本)?\s*(?:周|星期|礼拜)\s*([一二三四五六日天1-7])/);
+  if (m && week[m[2]]) {
+    const target = week[m[2]] - 1;
+    if (m[1] === '下') {
+      let toNextMonday = (7 - weekdayIndex(today)) % 7;
+      if (toNextMonday === 0) toNextMonday = 7;
+      return iso(addDays(toNextMonday + target));
+    }
+    let ahead = (target - weekdayIndex(today) + 7) % 7;
+    if (ahead === 0) ahead = 7;
+    return iso(addDays(ahead));
+  }
+
+  return raw;
+}
+
 function normalizeTodoInput(input) {
   const status = coerceStatus(input.status, input.done);
   const now = nowIso();
-  const dueDate = validDate(input.dueDate) ? input.dueDate : null;
+  const resolvedDue = resolveDateText(input.dueDate);
+  const dueDate = validDate(resolvedDue) ? resolvedDue : null;
   const dueTime = validTime(input.dueTime) ? input.dueTime : null;
   return {
     id: String(input.id || uid()),
@@ -1123,7 +1195,12 @@ function openModal(kind) {
   document.body.classList.add('modal-open');
   renderModal();
 }
-function closeModal() {
+function closeModal(fromBack) {
+  /* 手机上按“返回”键也想关面板：打开时压了一条历史记录，关闭时先退回去 */
+  if (!fromBack && history.state && history.state.dshModal) {
+    history.back();
+    return;
+  }
   state.modal = null;
   document.body.classList.remove('modal-open');
   const root = $('#modal-root'); if (root) root.innerHTML = '';
@@ -1131,6 +1208,10 @@ function closeModal() {
   state.themeMenuOpen = false;
   renderThemePop();
 }
+/* 浏览器返回键 / 手机返回手势 → 关掉当前面板，而不是直接退出页面 */
+window.addEventListener('popstate', function () {
+  if (state.modal) closeModal(true);
+});
 function refreshAfterChange(message) {
   renderAll();
   if (message) toast(message);
@@ -1869,6 +1950,10 @@ function toggleFormDeadline() {
 }
 function renderModal() {
   const root = $('#modal-root'); if (!root) return;
+  /* 面板打开时压一条历史记录，这样手机返回键先关面板 */
+  if (state.modal && !(history.state && history.state.dshModal)) {
+    try { history.pushState({ dshModal: state.modal }, ''); } catch (err) { /* 忽略 */ }
+  }
   document.body.classList.toggle('modal-open', !!state.modal);
   if (!state.modal) { root.innerHTML = ''; return; }
   if (state.modal === 'form') root.innerHTML = renderTodoForm();
@@ -1876,6 +1961,10 @@ function renderModal() {
   else if (state.modal === 'ai') root.innerHTML = renderAIPanel();
   else if (state.modal === 'agent') root.innerHTML = renderAgentPanel();
   else if (state.modal === 'import') root.innerHTML = renderImportModal();
+
+  /* 聊天类面板：每次重绘后自动滚到底，不然新消息看不见 */
+  const thread = root.querySelector('.chat-box');
+  if (thread) thread.scrollTop = thread.scrollHeight;
 }
 function openSettings(tab) {
   state.modal = 'settings';
@@ -2007,7 +2096,16 @@ document.addEventListener('click', (e) => {
     return;
   }
   const act = el.dataset.act;
-  if (act === 'close-modal') { if (e.target === el) closeModal(); return; }
+  if (act === 'close-modal') {
+    /* 点遮罩的空白处：只有真的点在遮罩本身才关（点抽屉里面不关）
+       点 × 按钮：即使点在图标 <svg> 上也关 —— 以前判断 e.target === el 时，点在图标上不算，于是按钮“不灵” */
+    if (el.classList && el.classList.contains('overlay')) {
+      if (e.target === el) closeModal();
+    } else {
+      closeModal();
+    }
+    return;
+  }
   if (act === 'form-deadline') { toggleFormDeadline(); return; }
   if (act === 'form-priority') { state.form.priority = Number(el.dataset.p); state.formError = ''; renderModal(); return; }
   if (act === 'form-status') { state.form.status = el.dataset.status; renderModal(); return; }
@@ -2172,6 +2270,35 @@ async function aiExtractTodos(text) {
 }
 
 /* ---------------- AI 面板 ---------------- */
+async function aiChatExtract() {
+  const ai = state.ai;
+  const prompt = '你是日程整理助手，用中文回答。根据对话把用户的待办整理成列表，也可以按用户要求修改已有条目。\n'
+    + '只输出一个 JSON 对象，不要解释、不要代码块：\n'
+    + '{"reply":"一句话说明你做了什么","todos":[{"title":"标题","dueDate":"YYYY-MM-DD 或 null","dueTime":"HH:mm 或 null","priority":1-5,"tags":["标签"],"notes":"备注"}]}\n'
+    + '规则：priority 1 最低 5 最紧急，没说就 3；日期补成 YYYY-MM-DD；todos 是“修改后的完整列表”，不是增量。';
+  const current = ai.parsed.map(t => ({
+    title: t.title || '', dueDate: t.dueDate || null, dueTime: t.dueTime || null,
+    priority: Number(t.priority) || 3, tags: t.tags || [], notes: t.notes || ''
+  }));
+  const messages = [
+    { role: 'system', content: prompt },
+    { role: 'system', content: '今天是 ' + todayStr() + '。当前列表：' + JSON.stringify(current) }
+  ].concat(ai.messages.slice(-10));
+
+  const out = await callAI(messages, { maxTokens: 2200 });
+  const data = parseJsonLoose(out);
+  const reply = (data && (data.reply || data.message)) || '';
+  const arr = itemsFromJson(data && data.todos ? data.todos : data);
+  const items = arr.map(x => normalizeTodoInput({
+    title: x.title || x.name, notes: x.notes || '', priority: x.priority,
+    tags: x.tags || [], dueDate: x.dueDate || null, dueTime: x.dueTime || null,
+    endTime: x.endTime || null, startDate: x.startDate || null, isDeadline: !!x.isDeadline,
+    location: x.location || '', status: x.status || 'todo', source: 'ai',
+    subtasks: Array.isArray(x.subtasks) ? x.subtasks : []
+  })).filter(x => x.title);
+  return { reply, items };
+}
+
 const AI_TABS = [
   ['extract', '智能添加', 'wand-2'], ['prioritize', '智能排序', 'list-tree'],
   ['summarize', '总结', 'bar-chart-3'], ['breakdown', '拆解', 'split-square-horizontal'],
@@ -2180,6 +2307,7 @@ const AI_TABS = [
 function openAI(tab) {
   state.modal = 'ai'; if (tab) state.aiTab = tab;
   state.ai.error = '';
+  installAiDrag();
   renderModal();
 }
 function renderAIPanel() {
@@ -2204,19 +2332,48 @@ function aiStatusBadge() {
 }
 function renderAIExtract() {
   const ai = state.ai;
+  const thread = ai.messages.length
+    ? ai.messages.map(m => `<div class="msg ${m.role === 'user' ? 'user' : 'ai'}">${m.role === 'user' ? esc(m.content) : renderRich(m.content)}</div>`).join('')
+    : '<p class="hint">说一句话就能拆成日程；接着说「第二条改成周五」「删掉体测」，AI 改完你确认再入库。</p>';
+
+  const rows = ai.parsed.map((t, i) => `<div class="import-item" draggable="true" data-idx="${i}" style="align-items:flex-start;gap:10px">
+      <input type="checkbox" data-act="ai-check" data-i="${i}" ${t._pick ? 'checked' : ''} style="margin-top:6px">
+      <span class="drag-handle" title="拖动排序">⋮⋮</span>
+      <span style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <input class="input" data-act="ai-edit" data-i="${i}" data-field="title" value="${esc(t.title || '')}" placeholder="标题">
+        <span style="display:flex;gap:6px;flex-wrap:wrap">
+          <input class="input" type="date" data-act="ai-edit" data-i="${i}" data-field="dueDate" value="${esc(t.dueDate || '')}" style="width:auto">
+          <input class="input" type="time" data-act="ai-edit" data-i="${i}" data-field="dueTime" value="${esc(t.dueTime || '')}" style="width:auto">
+          <select class="input" data-act="ai-edit" data-i="${i}" data-field="priority" style="width:auto">
+            ${[1, 2, 3, 4, 5].map(p => `<option value="${p}" ${Number(t.priority) === p ? 'selected' : ''}>优先级 ${p}</option>`).join('')}
+          </select>
+        </span>
+        ${t.notes ? `<small class="hint">${esc(t.notes)}</small>` : ''}
+      </span>
+      <span class="row-tools">
+        <button class="mini" data-act="ai-move" data-i="${i}" data-dir="-1" title="上移" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="mini" data-act="ai-move" data-i="${i}" data-dir="1" title="下移" ${i === ai.parsed.length - 1 ? 'disabled' : ''}>↓</button>
+      </span>
+    </div>`).join('');
+
   return `<div class="ai-tab-body">
-    <div class="form-field"><label>用一句话描述，AI 会拆成结构化日程</label><textarea class="input" data-ai="text" rows="3" placeholder="例如：明天下午3点开会，高优先级；周五前交高数作业">${esc(ai.text)}</textarea></div>
-    <div class="row wrap"><button class="btn btn-primary btn-sm" data-act="ai-parse">${icon('wand-2', 14)} 解析</button>
+    <div class="chat-box" style="max-height:190px">${thread}</div>
+    <div class="chat-input" style="margin-top:10px">
+      <input class="input" data-ai="text" value="${esc(ai.text)}" placeholder="接着说要做的事，或让它改刚才的结果…">
+      <button class="btn btn-primary" data-act="ai-parse">${icon('send', 15)} 发送</button>
+    </div>
+    <div class="row wrap" style="margin-top:8px">
       <button class="btn btn-ghost btn-sm" data-act="ai-file">${icon('upload', 13)} 从文件填入</button>
       <button class="btn btn-ghost btn-sm" data-act="ai-image">${icon('image', 13)} 截图识别</button>
-      <span class="hint">${aiReady() ? '将调用已配置模型' : '未配置 Key 时走本地解析'}</span></div>
-    <p class="hint" style="margin:7px 0 0">支持 Word / Excel / TXT / Markdown / CSV / JSON / 图片；选择后会自动填入并解析。</p>
-    ${ai.busy ? `<div class="info-box"><span class="spinner"></span> 解析中…</div>` : ''}
+      <button class="btn btn-ghost btn-sm" data-act="ai-reset">${icon('rotate-ccw', 13)} 重新开始</button>
+      <span class="hint">${aiReady() ? '回车或点发送' : '未配置 Key 时走本地解析'}</span>
+    </div>
+    ${ai.busy ? `<div class="info-box"><span class="spinner"></span> 处理中…</div>` : ''}
     ${ai.error ? `<div class="error-box">${esc(ai.error)}<br><button class="btn btn-primary btn-xs" data-act="open-settings" style="margin-top:6px">去设置 / 测试连接</button></div>` : ''}
-    ${ai.parsed.length ? `<div class="flex-between"><b style="font-size:12px">解析结果 ${ai.parsed.length} 条</b>${aiStatusBadge()}</div>
-      <div class="import-preview">${ai.parsed.map((t, i) => `<label class="import-item"><span><b>${esc(t.title)}</b><small>${esc([t.dueDate || '无日期', t.dueTime || '', '优先级 ' + t.priority, t.notes || ''].filter(Boolean).join(' · '))}</small></span><input type="checkbox" data-act="ai-check" data-i="${i}" ${t._pick ? 'checked' : ''}></label>`).join('')}</div>
-      <button class="btn btn-primary" data-act="ai-add">${icon('plus', 15)} 添加选中项</button>` : ''}
-    <div class="info-box">智能添加默认只把「勾选」的条目加入清单；可以逐条取消。支持把一段课表/通知/截图变成多条日程。</div>
+    ${ai.parsed.length ? `<div class="flex-between"><b style="font-size:12px">待录入 ${ai.parsed.length} 条 · 标题 / 日期 / 时间 / 优先级都能直接改</b>${aiStatusBadge()}</div>
+      <div class="import-preview">${rows}</div>
+      <button class="btn btn-primary" data-act="ai-add">${icon('plus', 15)} 添加勾选的 <span id="ai-pick-count">${ai.parsed.filter(t => t._pick).length}</span> 条</button>` : ''}
+    <div class="info-box">勾选的条目才会加入清单；勾选框旁边的输入框可以直接手改，改完再点按钮。</div>
   </div>`;
 }
 function renderAIPrioritize() {
@@ -2248,21 +2405,35 @@ function renderAIBreakdown() {
 }
 function renderAIChat() {
   const ai = state.ai;
-  return `<div class="ai-tab-body"><div class="chat-box" id="ai-chat-box">${ai.messages.map(m => `<div class="msg ${m.role === 'user' ? 'user' : 'ai'}">${m.role === 'user' ? esc(m.content) : renderRich(m.content)}</div>`).join('') || '<p class="hint">问它任何日程规划问题，例如「这周怎么安排复习？」</p>'}</div>
+  return `<div class="ai-tab-body"><div class="chat-box" id="ai-chat-box">${ai.chatMessages.map(m => `<div class="msg ${m.role === 'user' ? 'user' : 'ai'}">${m.role === 'user' ? esc(m.content) : renderRich(m.content)}</div>`).join('') || '<p class="hint">问它任何日程规划问题，例如「这周怎么安排复习？」</p>'}</div>
     <div class="chat-input"><input class="input" data-ai="chat" placeholder="输入消息…" value="${esc(ai.chat || '')}"><button class="btn btn-primary" data-act="ai-chat-send">${icon('send', 15)}</button></div>
     ${ai.error ? `<div class="error-box">${esc(ai.error)}</div>` : ''}</div>`;
 }
 async function doAIParse() {
   const ai = state.ai;
-  if (!ai.text.trim()) { ai.error = '请先输入一段待办描述'; renderModal(); return; }
-  ai.busy = true; ai.error = ''; ai.parsed = []; renderModal();
+  const text = ai.text.trim();
+  if (!text) { ai.error = '先说一句要做的事'; renderModal(); return; }
+
+  ai.chatMessages.push({ role: 'user', content: text });
+  ai.text = '';
+  ai.busy = true; ai.error = ''; renderModal();
+
   try {
-    let items;
-    if (aiReady()) { items = await aiExtractTodos(ai.text); ai.engine = 'openai'; }
-    else { items = parseLocalText(ai.text); ai.engine = 'local'; }
-    if (!items.length) throw new Error('没有解析出有效日程，请换一种说法或每行写一条');
-    ai.parsed = items.map(x => Object.assign({}, x, { _pick: true }));
-  } catch (e) { ai.error = e.message || String(e); }
+    if (aiReady()) {
+      const { reply, items } = await aiChatExtract();
+      ai.engine = 'openai';
+      ai.messages.push({ role: 'assistant', content: reply || '已更新待办列表' });
+      ai.parsed = items.map(x => Object.assign({}, x, { _pick: true }));
+    } else {
+      const items = parseLocalText(text);
+      ai.engine = 'local';
+      ai.messages.push({ role: 'assistant', content: '没连模型，用本地规则拆了 ' + items.length + ' 条。' });
+      ai.parsed = items.map(x => Object.assign({}, x, { _pick: true }));
+    }
+    if (!ai.parsed.length) throw new Error('没有解析出有效日程，请换一种说法或每行写一条');
+  } catch (e) {
+    ai.error = e.message || String(e);
+  }
   ai.busy = false; renderModal();
 }
 async function doAIImage() {
@@ -2365,12 +2536,119 @@ async function fillAIFromFile(file) {
   }
   ai.busy = false; renderModal();
 }
+function moveParsedItem(index, dir) {
+  const list = state.ai.parsed;
+  const to = index + dir;
+  if (!list[index] || to < 0 || to >= list.length) return;
+  const [item] = list.splice(index, 1);
+  list.splice(to, 0, item);
+  renderModal();
+}
+
+/* 拖拽排序：桌面端可拖，手机端用 ↑↓ 按钮 */
+function installAiDrag() {
+  if (installAiDrag.done) return;
+  installAiDrag.done = true;
+  let fromIndex = -1;
+  document.addEventListener('dragstart', (e) => {
+    const row = e.target.closest && e.target.closest('.import-item[data-idx]');
+    if (!row || state.modal !== 'ai') return;
+    fromIndex = Number(row.dataset.idx);
+    try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(fromIndex)); } catch (err) { /* 忽略 */ }
+    row.classList.add('dragging');
+  });
+  document.addEventListener('dragover', (e) => {
+    if (state.modal !== 'ai' || fromIndex < 0) return;
+    if (e.target.closest && e.target.closest('.import-item[data-idx]')) e.preventDefault();
+  });
+  document.addEventListener('drop', (e) => {
+    const row = e.target.closest && e.target.closest('.import-item[data-idx]');
+    if (!row || state.modal !== 'ai' || fromIndex < 0) return;
+    e.preventDefault();
+    const to = Number(row.dataset.idx);
+    const list = state.ai.parsed;
+    if (fromIndex !== to && list[fromIndex]) {
+      const [item] = list.splice(fromIndex, 1);
+      list.splice(to, 0, item);
+      renderModal();
+    }
+    fromIndex = -1;
+  });
+  document.addEventListener('dragend', () => {
+    fromIndex = -1;
+    document.querySelectorAll('.import-item.dragging').forEach((el) => el.classList.remove('dragging'));
+  });
+}
+
+/* 录入后的“撤销”条 */
+function showUndo(label, ids) {
+  if (!ids || !ids.length) return;
+  state.ai.undoIds = ids.slice();
+  let bar = document.getElementById('undo-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'undo-bar';
+    bar.className = 'undo-bar';
+    document.body.appendChild(bar);
+  }
+  bar.innerHTML = '<span>' + esc(label) + '</span><button data-act="undo-add">撤销</button>';
+  bar.classList.add('show');
+  clearTimeout(showUndo.timer);
+  showUndo.timer = setTimeout(() => bar.classList.remove('show'), 9000);
+}
+
+function undoLastAdd() {
+  const ids = state.ai.undoIds || [];
+  if (!ids.length) return;
+  const drop = new Set(ids);
+  state.todos = state.todos.filter((t) => !drop.has(t.id));
+  state.ai.undoIds = [];
+  saveTodos();
+  renderAll();
+  const bar = document.getElementById('undo-bar');
+  if (bar) bar.classList.remove('show');
+  toast('已撤销，删掉 ' + ids.length + ' 条');
+}
+
+function applyAIEdit(el) {
+  const index = Number(el.dataset.i);
+  const field = el.dataset.field;
+  const item = state.ai.parsed[index];
+  if (!item || !field) return;
+  if (field === 'priority') { item.priority = Number(el.value) || 3; return; }
+  item[field] = el.value || null;
+}
+
 function doAIAdd() {
-  const items = state.ai.parsed.filter(x => x._pick).map(x => { const y = Object.assign({}, x); delete y._pick; return y; });
-  if (!items.length) { state.ai.error = '请先勾选要添加的条目'; renderModal(); return; }
+  const picked = state.ai.parsed.filter(x => x._pick).map(x => { const y = Object.assign({}, x); delete y._pick; return y; });
+  if (!picked.length) { state.ai.error = '请先勾选要添加的条目'; renderModal(); return; }
+
+  /* 去重：标题一样 + 截止日期一样，就当同一条，避免重复导入 */
+  const keyOf = (t) => String(t.title || '').trim().toLowerCase() + '|' + String(t.dueDate || '');
+  const existing = new Set(activeTodos().map(keyOf));
+  const items = [];
+  let skipped = 0;
+  for (const item of picked) {
+    const key = keyOf(item);
+    if (existing.has(key)) { skipped += 1; continue; }
+    existing.add(key);          // 同一批里也别塞两条一样的
+    items.push(item);
+  }
+
+  if (!items.length) {
+    state.ai.error = '这些条目在清单里已经存在了，没有新增';
+    renderModal();
+    return;
+  }
+
+  const before = new Set(state.todos.map((t) => t.id));
   bulkCreate(items);
+  const addedIds = state.todos.filter((t) => !before.has(t.id)).map((t) => t.id);
+
   state.ai.parsed = []; state.ai.text = '';
-  closeModal(); state.view = 'list'; renderAll(); toast(`已添加 ${items.length} 条日程`);
+  closeModal(); state.view = 'list'; renderAll();
+  toast(skipped ? `已添加 ${items.length} 条，跳过 ${skipped} 条重复` : `已添加 ${items.length} 条日程`);
+  showUndo('已添加 ' + items.length + ' 条', addedIds);
 }
 async function doAIPrioritize() {
   const ai = state.ai;
@@ -2460,9 +2738,9 @@ async function doAIChat() {
     if (!aiReady()) throw new Error('请先在设置里配置模型后再对话');
     const out = await callAI([
       { role: 'system', content: '你是「智能日程助手」，回答要具体、分点、可执行。用户数据只在本机，不要编造不存在的日程。' },
-      ...ai.messages.slice(-10)
+      ...ai.chatMessages.slice(-10)
     ], { maxTokens: 900 });
-    ai.messages.push({ role: 'assistant', content: out });
+    ai.chatMessages.push({ role: 'assistant', content: out });
   } catch (e) { ai.error = e.message || String(e); }
   ai.busy = false; renderModal();
   const box = $('#ai-chat-box'); if (box) box.scrollTop = box.scrollHeight;
@@ -2689,6 +2967,7 @@ document.addEventListener('click', (e) => {
   if (act === 'ai-parse') { doAIParse(); return; }
   if (act === 'ai-file') { doAIFile(); return; }
   if (act === 'ai-image') { doAIImage(); return; }
+  if (act === 'ai-reset') { state.ai.messages = []; state.ai.parsed = []; state.ai.text = ''; state.ai.error = ''; renderModal(); return; }
   if (act === 'ai-add') { doAIAdd(); return; }
   if (act === 'ai-prioritize') { doAIPrioritize(); return; }
   if (act === 'ai-summary') { doAISummary(); return; }
@@ -2704,14 +2983,30 @@ document.addEventListener('click', (e) => {
   if (act === 'agent-ignore-delete') { state.agent.handled['p' + el.dataset.i] = true; renderModal(); return; }
   if (act === 'agent-undo') { undoAgent(); return; }
   if (act === 'ai-check') { const i = Number(el.dataset.i); if (state.ai.parsed[i]) state.ai.parsed[i]._pick = el.checked; return; }
+  if (act === 'ai-move') { moveParsedItem(Number(el.dataset.i), Number(el.dataset.dir)); return; }
+  if (act === 'undo-add') { undoLastAdd(); return; }
 });
 document.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.ai !== undefined) { state.ai[el.dataset.ai] = el.value; return; }
   if (el.dataset.agent === 'instruction') { state.agent.instruction = el.value; return; }
+  if (el.dataset.act === 'ai-edit') applyAIEdit(el);
+});
+/* date / time 这类控件改完不一定触发 input，change 也接一下 */
+document.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.dataset && el.dataset.act === 'ai-edit') applyAIEdit(el);
 });
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && state.modal === 'agent') { e.preventDefault(); doAgentRun(); }
+
+  /* AI 面板：输入框里回车 = 发送（Shift+回车留给换行） */
+  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey
+      && e.target && e.target.dataset && e.target.dataset.ai === 'text'
+      && state.modal === 'ai') {
+    e.preventDefault();
+    if (!state.ai.busy) doAIParse();
+  }
 });
 
 /* ===================== 05 · import ===================== */
@@ -2726,14 +3021,30 @@ function pick(obj, keys) {
   return '';
 }
 function normTime(v) {
-  if (v instanceof Date) return pad2(v.getHours()) + ':' + pad2(v.getMinutes());
-  const s = String(v == null ? '' : v);
-  const m = s.match(/(\d{1,2}):(\d{2})/);
-  if (!m) return null;
-  let h = parseInt(m[1], 10);
-  if (/(下午|晚上|pm)/i.test(s) && h < 12) h += 12;
-  if (/(上午|凌晨|am)/i.test(s) && h === 12) h = 0;
-  return pad2(h) + ':' + m[2];
+  if (v instanceof Date && !isNaN(v)) return pad2(v.getHours()) + ':' + pad2(v.getMinutes());
+
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return null;
+
+  let hour;
+  let minute;
+  let m = s.match(/(\d{1,2})\s*[:：]\s*(\d{1,2})/);
+  if (m) {
+    hour = parseInt(m[1], 10);
+    minute = parseInt(m[2], 10);
+  } else {
+    /* 中文写法：下午3点 / 晚上8点半 / 3点20分 / 9点 */
+    m = s.match(/(\d{1,2})\s*[点點时時]\s*(半|\d{1,2}\s*分?)?/);
+    if (!m) return null;
+    hour = parseInt(m[1], 10);
+    minute = m[2] === '半' ? 30 : (m[2] ? parseInt(m[2], 10) : 0);
+  }
+
+  if (/(下午|晚上|傍晚|pm)/i.test(s) && hour < 12) hour += 12;
+  if (/中午/.test(s) && hour < 11) hour += 12;
+  if (/(上午|凌晨|早上|早晨|am)/i.test(s) && hour === 12) hour = 0;
+  if (hour > 23 || minute > 59 || hour < 0 || minute < 0) return null;
+  return pad2(hour) + ':' + pad2(minute);
 }
 function normDate(v) {
   if (v instanceof Date && !isNaN(v)) return ymd(v);
@@ -2746,8 +3057,17 @@ function normDate(v) {
   if (!s) return null;
   const m = s.match(/(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
   if (m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+
+  /* 没写年份的先按我们的口径算（明天 / 周五 / 11.4 / 3月5日） */
+  const resolved = resolveDateText(s);
+  if (resolved && /^\d{4}-\d{2}-\d{2}$/.test(resolved)) return resolved;
+
   const d = new Date(s);
-  return isNaN(d) ? null : ymd(d);
+  if (isNaN(d)) return null;
+  /* 浏览器会把 "11/04" 这种没年份的理解成 2001 年 —— 这里纠正成今年 */
+  let year = d.getFullYear();
+  if (year === 2001 && !/\d{4}/.test(s)) year = new Date().getFullYear();
+  return `${year}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 function parseImportDue(raw) {
   const dateRaw = pick(raw, ['dueDate', 'date', 'startDate', '日期', '截止日期', '开始日期']);
