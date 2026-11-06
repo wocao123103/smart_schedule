@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我在学html</title>
+    <base target="_blank">
+    <!-- 全站只留这一个 <style>
+        ，右侧文字的颜色就改下面那一条规则 -->
+    <style>
+        /* 极光背景：深色底 + 三团彩色光 */
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: #fff;
+            /* 整体字号基准：h1、p、h3 都按 em 跟着它放大 */
+            font-size: 22px;
+            display: flex;
+            /* 左侧栏和正文并排，各占各的地盘 */
+            gap: 22px;
+            background: radial-gradient(circle at 15% 8%, rgba(99, 102, 241, .75), transparent 45%), radial-gradient(circle at 85% 4%, rgba(34, 211, 238, .60), transparent 45%), radial-gradient(circle at 50% 96%, rgba(244, 114, 182, .55), transparent 55%), #0a0a14;
+        }
+
+        /* 去掉 a 自带的蓝色下划线，只留下 h3 自己的白线 */
+        a {
+            text-decoration: none;
+        }
+
+        .A1 {
+            width: fit-content;
+            margin: 16px auto;
+            background: #fff;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 12px rgba(167, 139, 250, .65));
+        }
+
+        hr {
+            max-width: 100%;
+            /* 那条 999px 的线不撑破正文 */
+        }
+
+        /* ============ 左侧栏：凸起的一层，浮在极光上面 ============ */
+        .side {
+            flex: 0 0 250px;
+            /* 固定宽度，真的占住这块地方，不压住正文 */
+            align-self: stretch;
+            /* 整体拉成一个矩形竖条，不是小卡片 */
+            display: flex;
+            flex-direction: column;
+            margin: 22px 0 22px 22px;
+            padding: 16px;
+            border-radius: 22px;
+            /* 矩形是矩形，四个角切成弧形 */
+            font-size: 15px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .03));
+            border: 1px solid rgba(255, 255, 255, .14);
+            /* 凸：外投影 + 顶部高光 + 底部暗边 */
+            box-shadow: 0 18px 40px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .24), inset 0 -1px 0 rgba(0, 0, 0, .40);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* ============ 右侧栏：另写一段，故意和左边不一样 ============ 左边（.side）：紫色调、圆角 22px、方块 12px、按钮贴底、往里“凸”出来 右边（.side-right）：青色调、圆角 14px、方块 8px、带描边、往左“凹”一点 共同点只有「窄条 + 竖排」这件大事，其余观感都做了区分。 */
+        .side-right {
+            flex: 0 0 250px;
+            align-self: stretch;
+            display: flex;
+            flex-direction: column;
+            /* 和左边相反：右边留 22px 空隙 */
+            margin: 22px 22px 22px 0;
+            /* 顶部留出固定仓库链接的位置 */
+            padding: 58px 16px 16px;
+            /* 左边 22px，这里更方一点 */
+            border-radius: 14px;
+            font-size: 15px;
+            /* 青 → 粉，方向和左边那条 160deg 也不同 */
+            background: linear-gradient(200deg, rgba(34, 211, 238, .22), rgba(244, 114, 182, .12) 60%, rgba(0, 0, 0, .22));
+            /* 紫色描边换成青色描边 */
+            border: 1px solid rgba(34, 211, 238, .35);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(34, 211, 238, .28), inset 0 -1px 0 rgba(0, 0, 0, .45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* 右上角：GitHub 仓库入口 */
+        .repo-link {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            z-index: 10001;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(34, 211, 238, .48);
+            background: linear-gradient(135deg, rgba(34, 211, 238, .24), rgba(139, 92, 246, .28));
+            color: #e8fbff;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .03em;
+            text-decoration: none;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255, 255, 255, .25);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+        }
+
+        .repo-link::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22d3ee;
+            box-shadow: 0 0 10px rgba(34, 211, 238, .95);
+        }
+
+        .repo-link:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.12);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 255, 255, .35);
+        }
+
+        /* 右栏的小标题：换成青色，字距再宽一点 */
+        .side-right .side-title {
+            color: rgba(34, 211, 238, .80);
+            letter-spacing: .26em;
+        }
+
+        /* 右栏的方块：底色偏青、圆角更小、多一圈细边 */
+        .side-right .side-item {
+            border-radius: 8px;
+            background: linear-gradient(180deg, rgba(34, 211, 238, .16), rgba(255, 255, 255, .03));
+            border: 1px solid rgba(34, 211, 238, .22);
+            color: #dff9ff;
+        }
+
+        /* 左边 hover 是往上抬，右边改成往中间（左）挪一下，手感不同 */
+        .side-right .side-item:hover {
+            transform: translateX(-2px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, .52), inset 0 1px 0 rgba(34, 211, 238, .35), inset 0 -2px 0 rgba(0, 0, 0, .32);
+        }
+
+        /* 右栏的凹槽：偏青黑，配青色细线 */
+        .side-right .side-well {
+            background: rgba(0, 24, 34, .55);
+            box-shadow: inset 0 3px 9px rgba(0, 0, 0, .80), inset 0 -1px 0 rgba(34, 211, 238, .12), 0 1px 0 rgba(255, 255, 255, .08);
+        }
+
+        /* 右栏的按钮：粉→青，和左边的紫→青区分开 */
+        .side-right .side-btn {
+            background: linear-gradient(135deg, rgba(244, 114, 182, .88), rgba(34, 211, 238, .62));
+        }
+
+        /* ============ 右栏专属组件：左边没有这段 ============ 一段带左侧竖线的说明框，用来放“这里是说明 / 提示”这类内容。 */
+        .side-note {
+            margin: 2px 0 12px;
+            padding: 10px 12px;
+            /* 只画左边一条线，当作强调 */
+            border-left: 3px solid #22d3ee;
+            border-radius: 6px;
+            background: rgba(34, 211, 238, .09);
+            font-size: 13px;
+            line-height: 1.75;
+            color: rgba(223, 249, 255, .85);
+        }
+
+        .side-note b {
+            color: #22d3ee;
+            font-weight: 600;
+        }
+
+        /* 说明框里的链接：青色 + 下划线，一眼看出能点 */
+        .side-note a {
+            color: #22d3ee;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        /* 右栏里的链接：让整块格子都能点，颜色跟着格子走。 要注意：浏览器默认会给 <a> 上一个链接蓝，所以必须显式写 color: inherit。 */
+        .side-right .side-item a {
+            display: block;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .side-right .side-item a:hover {
+            color: #ffffff;
+        }
+
+        /* 右栏底部两个按钮：整组一起贴着底部 */
+        .side-actions {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .side-actions .side-btn {
+            margin-top: 0;
+        }
+
+        .side-title {
+            margin: 4px 6px 12px;
+            font-size: 11px;
+            letter-spacing: .18em;
+            color: rgba(255, 255, 255, .55);
+        }
+
+        /* 凸起的小块：一层摞一层 */
+        .side-item {
+            margin-bottom: 9px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, .13), rgba(255, 255, 255, .04));
+            box-shadow: 0 6px 14px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255, 255, 255, .26), inset 0 -2px 0 rgba(0, 0, 0, .32);
+            color: #e9e6ff;
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+
+        .side-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, .52), inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 -2px 0 rgba(0, 0, 0, .32);
+        }
+
+        /* 凹进去的槽：进度放在里面 */
+        .side-well {
+            margin: 16px 0 14px;
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, .32);
+            box-shadow: inset 0 3px 9px rgba(0, 0, 0, .80), inset 0 -1px 0 rgba(255, 255, 255, .08), 0 1px 0 rgba(255, 255, 255, .10);
+        }
+
+        .side-well p {
+            margin: 0;
+            font-size: 11px;
+            color: rgba(255, 255, 255, .55);
+        }
+
+        .bar {
+            height: 8px;
+            margin: 9px 0 7px;
+            border-radius: 99px;
+            background: rgba(0, 0, 0, .55);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, .85);
+            overflow: hidden;
+        }
+
+        .bar i {
+            display: block;
+            width: 100%;
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #a78bfa, #22d3ee, #f472b6);
+            box-shadow: 0 0 10px rgba(167, 139, 250, .85);
+        }
+
+        /* 侧栏里的按钮 */
+        .side-btn {
+            display: block;
+            margin-top: auto;
+            /* 竖条拉高后，按钮贴着底部 */
+            padding: 11px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(139, 92, 246, .85), rgba(34, 211, 238, .65));
+            box-shadow: 0 8px 18px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -2px 0 rgba(0, 0, 0, .25);
+        }
+
+        .side-btn:hover {
+            filter: brightness(1.12);
+        }
+
+        /* ============ 正文区 ============ */
+        .content {
+            flex: 1;
+            min-width: 0;
+            /* 允许被压缩，图片不会撑破布局 */
+            padding: 22px 24px 40px;
+        }
+
+        /* ===== 右侧所有文字（h1 / p / h3）共用这一条规则 ===== 要改颜色，只改这里的 background 那一行； 想换纯色：把 background 三行和 color: transparent 删掉， 改成 color: #e8e8f3; 就行。 */
+        .content :is(h1, p, h3) {
+            width: fit-content;
+            margin: 16px auto;
+            background: linear-gradient(100deg, #a78bfa 0%, #22d3ee 38%, #f472b6 68%, #f472b6 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 0 12px rgba(167, 139, 250, .65));
+        }
+
+        /* 正文里的链接：块级 + 收缩到内容宽度。 这样链接的可点范围就只有图片 / 文字本身，两侧空白不再算跳转区。 */
+        .content a {
+            display: block;
+            width: fit-content;
+            margin: 0 auto;
+        }
+
+        /* 只有 h3 带下划线，表示可以点 */
+        .content h3 {
+            text-decoration: underline;
+            text-decoration-color: rgba(255, 255, 255, .85);
+        }
+
+        /* ============ 标题按钮：给 h3 套上和下面 zip 按钮同一套“凹凸” ============ 原来的 h3 是“渐变字 + 发光”，这里改成实体按钮： 渐变底色 + 顶部内高光 + 底部内暗边 + 外投影。 第四条规则（.content :is(h1,p,h3)）会把 h3 变成透明字， 所以要显式把 background-clip 改回 border-box、color 改回白色。 */
+        .content h3.cta {
+            width: fit-content;
+            margin: 18px auto 18px;
+            padding: 14px 32px;
+            border-radius: 16px;
+            font-size: 20px;
+            line-height: 1.2;
+            /* 覆盖“渐变字”：让渐变铺满整块，而不是只铺在文字上 */
+            -webkit-background-clip: border-box;
+            background-clip: border-box;
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(139, 92, 246, .92), rgba(34, 211, 238, .72));
+            /* 覆盖原来的发光投影和那条下划线 */
+            filter: none;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, .22);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .42), inset 0 -3px 0 rgba(0, 0, 0, .28);
+            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+        }
+
+        .content h3.cta:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, .60), inset 0 1px 0 rgba(255, 255, 255, .52), inset 0 -3px 0 rgba(0, 0, 0, .28);
+        }
+
+        /* 示例图居中 */
+        .content .img-center {
+            display: block;
+            margin: 0 auto;
+            width: 900px;
+            max-width: 100%;
+        }
+
+        /* ============ 正文里的下载按钮（zip） ============ 注意：.content 里的 p / h1 / h3 都被“渐变字”规则接管了颜色， 所以这里用 div 包一层，按钮自己写死白色文字，不跟着变透明。 尺寸、圆角、阴影全部和上面的 .cta 标题按钮对齐，两个按钮看起来是一对。 */
+        .dl-row {
+            text-align: center;
+            margin: 0 0 6px;
+        }
+
+        /* 两个入口的说明字：在线版 / 本地版各一行，弱化处理，不抢按钮 */
+        .entry-note {
+            margin: 8px 0 2px;
+            text-align: center;
+            font-size: 14px;
+            letter-spacing: .02em;
+            color: rgba(255, 255, 255, .62);
+        }
+
+        .entry-note b {
+            color: rgba(255, 255, 255, .88);
+        }
+
+        .dl-btn {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 16px;
+            font-size: 20px;
+            line-height: 1.2;
+            color: #ffffff;
+            background: linear-gradient(135deg, rgba(139, 92, 246, .92), rgba(34, 211, 238, .72));
+            border: 1px solid rgba(255, 255, 255, .22);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, .55), inset 0 1px 0 rgba(255, 255, 255, .42), inset 0 -3px 0 rgba(0, 0, 0, .28);
+            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+        }
+
+        .dl-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+            box-shadow: 0 18px 36px rgba(0, 0, 0, .60), inset 0 1px 0 rgba(255, 255, 255, .52), inset 0 -3px 0 rgba(0, 0, 0, .28);
+        }
+
+        /* ============ 点击正文那段文字弹出的窗口 ============ */
+        .mask {
+            position: fixed;
+            inset: 0;
+            z-index: 99;
+            /* 盖住整页，下面的东西全点不到 */
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(8, 6, 18, .74);
+            /* 和主页面同色调的暗紫黑 */
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+
+        .mask.show {
+            display: flex;
+        }
+
+        .dialog {
+            width: min(520px, 92vw);
+            padding: 28px;
+            border-radius: 22px;
+            font-size: 17px;
+            line-height: 1.7;
+            color: #fff;
+            /* 和主页面同一套极光配色，只是整体压暗一点 */
+            background: radial-gradient(circle at 15% 8%, rgba(99, 102, 241, .55), transparent 55%), radial-gradient(circle at 85% 4%, rgba(34, 211, 238, .40), transparent 55%), radial-gradient(circle at 50% 96%, rgba(244, 114, 182, .40), transparent 55%), #141026;
+            border: 1px solid rgba(255, 255, 255, .18);
+            box-shadow: 0 30px 70px rgba(0, 0, 0, .65), inset 0 1px 0 rgba(255, 255, 255, .22);
+        }
+
+        .dialog h2 {
+            margin: 0 0 10px;
+            font-size: 24px;
+        }
+
+        .dialog p {
+            margin: 0;
+            color: rgba(255, 255, 255, .78);
+        }
+
+        /* 弹窗打开时，页面本身不跟着滚 */
+        body.no-scroll {
+            overflow: hidden;
+        }
+
+        /* 那段文字改成"可以点"的样子 */
+        .content .open-tip {
+            cursor: pointer;
+        }
+
+        .content .open-tip:hover {
+            filter: drop-shadow(0 0 18px rgba(167, 139, 250, 1));
+        }
+
+        /* 窗口变窄时，侧栏站到正文上面，仍然不遮挡 */
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .side {
+                flex: none;
+                margin: 16px 16px 0;
+            }
+
+            /* 竖排之后右栏落在最下面，下边距补回来 */
+            .side-right {
+                margin: 16px;
+                padding: 16px;
+            }
+
+            /* 手机上仓库入口仍在右上角，尺寸收小 */
+            .repo-link {
+                top: 12px;
+                right: 12px;
+                padding: 7px 11px;
+                font-size: 12px;
+            }
+
+            .content {
+                padding: 16px;
+            }
+        }
+
+        /* ============ 「别碰我」：红色凹凸按钮 ============ */
+        .dont-touch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            width: 92px;
+            height: 92px;
+            margin: 20px auto 6px;
+            padding: 0;
+            border: 1px solid rgba(255, 110, 110, .65);
+            /* 圆形：半径给一半 */
+            border-radius: 50%;
+            font: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            line-height: 1.15;
+            color: #ffe9e9;
+            cursor: pointer;
+            /* 球面感：中间亮、边缘暗 */
+            background: radial-gradient(circle at 34% 28%, rgba(255, 140, 140, .95), rgba(200, 40, 40, .96) 45%, rgba(120, 16, 16, .98) 100%);
+            box-shadow: 0 14px 26px rgba(110, 0, 0, .62), 0 3px 8px rgba(0, 0, 0, .45), inset 0 2px 3px rgba(255, 200, 200, .65), inset 0 -6px 12px rgba(60, 0, 0, .75);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+            transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+            animation: dont-touch-beat 3.4s ease-in-out infinite;
+        }
+
+        .dont-touch:hover {
+            filter: brightness(1.12);
+            transform: translateY(-2px);
+        }
+
+        .dont-touch:active {
+            transform: translateY(2px) scale(.97);
+            box-shadow: 0 4px 10px rgba(120, 0, 0, .5), inset 0 5px 12px rgba(0, 0, 0, .65), inset 0 -2px 4px rgba(255, 150, 150, .35);
+        }
+
+        .dont-touch.cracked {
+            background: radial-gradient(circle at 34% 28%, rgba(180, 90, 90, .9), rgba(96, 20, 20, .97) 45%, rgba(48, 8, 8, .99) 100%);
+            color: #ffd0d0;
+            animation: none;
+        }
+
+        .dont-touch .pips {
+            display: inline-block;
+            margin-left: 6px;
+            letter-spacing: 1px;
+            color: #ff8a8a;
+        }
+
+        @keyframes dont-touch-beat {
+
+            0%,
+            100% {
+                box-shadow: 0 12px 26px rgba(120, 0, 0, .55), inset 0 1px 0 rgba(255, 190, 190, .55), inset 0 -3px 0 rgba(60, 0, 0, .55);
+            }
+
+            50% {
+                box-shadow: 0 14px 34px rgba(200, 30, 30, .75), inset 0 1px 0 rgba(255, 210, 210, .7), inset 0 -3px 0 rgba(60, 0, 0, .55);
+            }
+        }
+
+        /* ============ 玻璃层：盖在整页之上，但不吃点击 ============ */
+        #glass-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            pointer-events: none;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity .35s ease;
+        }
+
+        #glass-layer.on {
+            opacity: 1;
+        }
+
+        /* 玻璃本身的“光学”：轻微增亮 + 镜面高光 */
+        #glass-layer .sheen {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(120% 90% at 22% 8%, rgba(255, 255, 255, .10), transparent 55%), radial-gradient(90% 70% at 82% 92%, rgba(150, 200, 255, .10), transparent 60%), linear-gradient(118deg, rgba(255, 255, 255, .07) 0%, transparent 28%, transparent 62%, rgba(255, 255, 255, .05) 100%);
+            mix-blend-mode: screen;
+        }
+
+        #glass-layer svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 裂纹本体：白线 + 外发光；再叠一条低透明度的彩虹线，当作折射 */
+        #glass-layer .crack-core {
+            fill: none;
+            stroke: rgba(255, 255, 255, .92);
+            stroke-width: 1.1;
+            vector-effect: non-scaling-stroke;
+            filter: drop-shadow(0 0 3px rgba(255, 255, 255, .85));
+        }
+
+        #glass-layer .crack-glow {
+            fill: none;
+            stroke: rgba(190, 225, 255, .35);
+            stroke-width: 2.4;
+            vector-effect: non-scaling-stroke;
+            filter: blur(1.4px);
+        }
+
+        #glass-layer .crack-prism {
+            fill: none;
+            stroke: url(#prism);
+            stroke-width: 1.6;
+            vector-effect: non-scaling-stroke;
+            opacity: .55;
+            mix-blend-mode: screen;
+        }
+
+        #glass-layer .shard {
+            fill: rgba(255, 255, 255, .05);
+            stroke: rgba(255, 255, 255, .18);
+            stroke-width: .8;
+            vector-effect: non-scaling-stroke;
+        }
+
+        /* 第三下：整屏压暗一点，像要塌 */
+        #glass-layer.doomed {
+            background: radial-gradient(circle at 50% 45%, rgba(120, 0, 0, .10), rgba(0, 0, 0, .55));
+        }
+
+        /* 最后一下：先抖 + 缩，再慢慢压黑，0.5 秒后才退出 */
+        #glass-layer .blackout {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            transition: opacity .35s ease-in .15s;
+        }
+
+        #glass-layer.blackout-on .blackout {
+            opacity: 1;
+        }
+
+        #glass-layer.collapsing {
+            animation: glass-collapse .5s ease-in both;
+        }
+
+        /* ===== 第四下之后：整页“死掉” ===== 1. 灰掉、暗掉，一看就知道没救了 2. 除了玻璃层，其他元素全部 pointer-events: none —— 点哪都没反应 3. 页面不再滚动，键盘也被挡掉 */
+        html.page-dead body {
+            overflow: hidden;
+        }
+
+        /* 整页褪色：filter 会连 body 自己的背景渐变一起处理 */
+        html.page-dead body {
+            filter: grayscale(1) brightness(.34) contrast(.95);
+        }
+
+        /* 玻璃层自己也要压暗：不然裂纹白得晃眼 */
+        #glass-layer .dead-veil {
+            position: absolute;
+            inset: 0;
+            background: rgba(4, 4, 10, .55);
+            opacity: 0;
+            transition: opacity .45s ease;
+        }
+
+        #glass-layer.dead .dead-veil {
+            opacity: 1;
+        }
+
+        /* 死掉之后裂纹别那么刺眼 */
+        #glass-layer.dead .crack-core {
+            stroke: rgba(255, 255, 255, .62);
+        }
+
+        #glass-layer.dead .crack-glow {
+            opacity: .45;
+        }
+
+        html.page-dead body>*:not(#glass-layer) {
+            pointer-events: none !important;
+            user-select: none;
+        }
+
+        /* 玻璃层本来是“不吃点击”的，这时候接管全局点击 */
+        #glass-layer.dead {
+            pointer-events: auto;
+            cursor: not-allowed;
+        }
+
+        #glass-layer .dead-hint {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 14px 22px;
+            border-radius: 14px;
+            background: rgba(10, 10, 20, .72);
+            border: 1px solid rgba(255, 255, 255, .16);
+            color: #ffd7d7;
+            font-size: 15px;
+            letter-spacing: .06em;
+            text-align: center;
+            line-height: 1.7;
+            opacity: 0;
+            transition: opacity .45s ease .15s;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .65);
+        }
+
+        #glass-layer.dead .dead-hint {
+            opacity: 1;
+        }
+
+        #glass-layer.dead .dead-hint small {
+            display: block;
+            margin-top: 4px;
+            color: rgba(255, 255, 255, .55);
+            font-size: 12px;
+            letter-spacing: .12em;
+        }
+
+        @keyframes glass-collapse {
+            0% {
+                transform: translate(0, 0) scale(1);
+                filter: brightness(1);
+            }
+
+            18% {
+                transform: translate(-7px, 5px) scale(1.004);
+            }
+
+            36% {
+                transform: translate(6px, -6px) scale(1.008);
+            }
+
+            54% {
+                transform: translate(-5px, 4px) scale(1.013);
+                filter: brightness(.9);
+            }
+
+            72% {
+                transform: translate(4px, -3px) scale(1.018);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1.024);
+                filter: brightness(.55);
+            }
+        }
+
+        #glass-layer .flash {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            opacity: 0;
+        }
+
+        #glass-layer .flash.go {
+            animation: glass-flash .45s ease-out;
+        }
+
+        @keyframes glass-flash {
+            0% {
+                opacity: .55;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="side">
+        <strong class="side-title">
+            给我学
+        </strong>
+        <div class="side-item">
+            <a class="A1" href="https://mc.kurogames.com" rel="noopener noreferrer">
+                鸣朝启动
+            </a>
+        </div>
+        <div class="side-item">
+            <a class="A1" href="https://zzz.mihoyo.com/main/" rel="noopener noreferrer">
+                绝区零启动
+            </a>
+        </div>
+        <div class="side-item">
+            <a class="A1"
+                href="https://sr.mihoyo.com/ad?from_channel=adbdsem&utm_source=mkt&utm_medium=sem&utm_campaign=963924"
+                rel="noopener noreferrer">
+                崩坏星穹铁道启动
+            </a>
+        </div>
+        <div class="side-item">
+            <a class="A1" href="https://ys.mihoyo.com/?utm_source=yuanshen_web" rel="noopener noreferrer">
+                原神启动
+            </a>
+        </div>
+        <div class="side-well">
+            <p>游玩进度</p>
+            <div class="bar"><i></i></div>
+            <p>已严肃游玩</p>
+        </div>
+        <!-- 别碰我：红色凹凸按钮（参考脑叶公司那只“碰一下就裂”的异想体） -->
+        <button class="dont-touch" id="dontTouch" type="button" title="碰了就别想反悔">
+            别碰我 <span class="pips" id="dontTouchPips"></span>
+        </button>
+        <!-- rel="noopener noreferrer"：新标签页里拿不到本页的 window.opener，
+             也不会把来源地址带给对方站点，外链一律加上 -->
+        <a class="side-btn" href="https://wocao123103.github.io/smart_schedule/" rel="noopener noreferrer">打开作品 ↗</a>
+    </aside>
+    <div class="content">
+        <h1 align="center">智能待办助手展示</h1>
+        <p align="center">
+            请点击下方图片或栏目进入体验
+        </p>
+        <p align="center" class="open-tip" onclick="openModal()">
+            记得不要乱点<br>?!你耳朵聋吗!?
+        </p>
+        <hr color="white" width="999px">
+        <a href="https://wocao123103.github.io/smart_schedule/" rel="noopener noreferrer">
+            <img class="img-center" src="预览.png" alt="进来体验吧">
+        </a>
+        <hr color="white" width="999px">
+        <a href="https://wocao123103.github.io/smart_schedule/" rel="noopener noreferrer">
+            <h3 class="cta">进来GitHub体验版智能待办助手</h3>
+        </a>
+        <!-- 两个入口定位不同：在线版只是体验，本地版才是正式部署 -->
+        <div class="entry-note">体验版 · 浏览器打开即用，<b>数据存在当前浏览器</b>，换设备不跟着走</div>
+        <!-- 下载按钮：放在 h3 正下方，靠 data-dl 由脚本拼出 GitHub 地址 -->
+        <div class="dl-row">
+            <a class="dl-btn" data-dl="安装_智能日程助手.zip">
+                下载本地部署版安装助手（zip）· v2.3.0
+            </a>
+        </div>
+        <div class="entry-note">本地版 · 装到这台电脑，<b>数据在本地 SQLite</b>，PySide6 控制面板</div>
+    </div>
+    <!-- ==================== 右侧栏：内容留给你自己改 ====================
+         和左边不是一套样式（青色描边 / 小圆角 / 按钮是粉的）。
+         改内容只动这个 <aside> 里面，CSS 一行都不用碰：
+           标题       → .side-title 里那行字
+           说明框     → .side-note 里那段话（左栏没有这个组件）
+           一条一条的 → 一个 <div class="side-item"> 就是一条，复制粘贴即可增减
+           进度条     → .bar 里 <i> 的宽度（默认 100% 满格，写 style="width:40%" 才有缺口）
+           底部按钮   → .side-btn 的 href 和文字
+         ============================================================== -->
+    <aside class="side side-right">
+        <strong class="side-title">
+            报告 · 下载
+        </strong>
+        <!-- 说明框：右栏专属，左边没有 -->
+        <div class="side-note">
+            点标题<b>在新标签页在线看 PPT</b>；<br>
+            在线版：浏览器里点开就用，<b>数据存在浏览器</b>；<br>
+            本地版：装到电脑，<b>数据在本地 SQLite</b>，<br>
+            安装包 <b>zip</b>，解压运行（双击即覆盖升级）。
+        </div>
+        <!-- 四条都是 PPT：href 由下面的脚本按 data-ppt 自动拼好 -->
+        <div class="side-item">
+            <a data-ppt="智能日程助手-开题报告-终版.pptx">1 本地部署版介绍 </a>
+        </div>
+        <div class="side-item">
+            <a data-ppt="智能日程助手-开题报告-GitHub版-5周.pptx">2 GitHub快速版体验介绍</a>
+        </div>
+        <div class="side-item">
+            <a data-ppt="智能日程助手-开题报告-Python实现版.pptx">3 Python 本地部署版（v2.3.0）</a>
+        </div>
+        <div class="side-item">
+            <a data-ppt="智能日程助手-优化报告-终版.pptx">4 优化报告 · 2026-11</a>
+        </div>
+        <!-- 底部：下载 zip + 刷新本页 -->
+        <div class="side-actions">
+            <a class="side-btn" href="#" onclick="location.reload(); return false;">刷新当前页面 ↻</a>
+        </div>
+    </aside>
+    <!-- 碎裂的玻璃：整层盖在页面上，pointer-events:none，底下照常能点 -->
+    <div id="glass-layer" aria-hidden="true">
+        <div class="sheen"></div>
+        <svg id="glass-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="prism" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#7dd3fc" />
+                    <stop offset="50%" stop-color="#f0abfc" />
+                    <stop offset="100%" stop-color="#fde68a" />
+                </linearGradient>
+            </defs>
+            <g id="glass-cracks"></g>
+        </svg>
+        <div class="flash" id="glass-flash"></div>
+        <div class="blackout"></div>
+        <div class="dead-veil"></div>
+        <div class="dead-hint">
+            无法忍住诱惑的人，没有前进的权利<br>我不能向没有准备好的人敞开大门
+            <br>你必须止步于此了，回去吧<br>这不会很难，当你决定放下一切时<br>你的步伐会变得无比轻盈<br>当你再次准备好了的时候，我们还会再见的
+            <br>......但我不确定我们还会不会再见
+
+        </div>
+    </div>
+    <!-- 点那段文字后弹出来的窗口：整层盖在页面上，后面的东西都点不到 -->
+    <div class="mask" id="mask" onclick="exitPage()">
+        <div class="dialog" onclick="exitPage()">
+            <h2 align="center">你耳朵真聋了</h2>
+            <h3 align="center">
+                现在鉴定你为非人知性体<br>滚去郊区吧您嘞<br>再见
+            </h3>
+        </div>
+    </div>
+    <!-- 右上角仓库入口：固定定位，不随内容滚动 -->
+    <a class="repo-link" href="https://github.com/wocao123103/smart_schedule" target="_blank"
+        rel="noopener noreferrer" aria-label="打开智能日程助手 GitHub 仓库">
+        GitHub 仓库 ↗
+    </a>
+    <script>
+        /* ================================================================
+           这段脚本干三件事：
+           1. 控制中间那个弹窗（打开 / 关闭 / 关网页）
+           2. 实现「别碰我」的玻璃碎裂（这块最长）
+           3. 把右栏的下载链接按文件名拼出来
+           下面每一行都写了注释，方便逐句看。
+           ================================================================ */
+
+        /* ---------------- 一、弹窗 ---------------- */
+
+        /* 打开弹窗：给遮罩加一个 class，CSS 里 .show 负责让它显示出来 */
+        function openModal() {
+            /* getElementById 按 id 找元素；classList.add 给元素加一个 class */
+            document.getElementById('mask').classList.add('show');
+            /* 给 body 加 no-scroll，CSS 里把它设成 overflow:hidden，弹窗时背景就不滚了 */
+            document.body.classList.add('no-scroll');
+        }
+
+        /* 关闭弹窗：把上面加的 class 再拿掉，两边必须成对出现 */
+        function closeModal() {
+            document.getElementById('mask').classList.remove('show');
+            document.body.classList.remove('no-scroll');
+        }
+
+        /* 关掉网页。浏览器有安全限制：不是脚本自己打开的标签页，window.close() 会被拒绝，
+           所以关不掉时要给个“已退出”的黑屏兜底 */
+        function exitPage() {
+            /* window.open('', '_self') 是给老浏览器的偏方：它能让当前页变成“脚本打开”的，
+               这样后面的 close() 才有机会生效 */
+            window.open('', '_self');   // 老浏览器要靠这句才肯关
+            /* 真正尝试关掉标签页。现代浏览器多数会直接忽略这一行 */
+            window.close();
+            /* 200 毫秒后再兜底：如果标签页还活着，就把整个 body 换成一屏黑底白字 */
+            setTimeout(function () {
+                /* innerHTML 会把原本的页面全部清掉，换成下面这段 HTML 字符串
+                   （用 + 号把几段字符串拼起来，只是为了让源码别太长） */
+                document.body.innerHTML =
+                    '<div style="position:fixed;inset:0;display:flex;align-items:center;' +
+                    'justify-content:center;background:#0a0a14;color:#e8e8f3;' +
+                    'font-size:20px;font-family:system-ui,sans-serif;">' +
+                    '自己关掉，get out' +
+                    '</div>';
+            }, 200);   /* 200 = 等 200 毫秒；单位永远是毫秒 */
+        }
+
+        /* ================================================================
+           二、「别碰我」玻璃碎裂
+           参考脑叶公司那只“碰一下就裂”的异想体：越碰越糟，最后彻底崩解。
+           第 1 下 → 按钮周围裂开
+           第 2 下 → 从旧裂口继续炸，碎得更狠
+           第 3 下 → 连右侧一起崩，整屏压暗
+           第 4 下 → 玻璃抖一下被“冻住”，整页变灰、点什么都没反应
+           再点一下 → 自己退出
+           同一次打开页面里不可逆：只会越来越碎，不会复原。
+           ================================================================ */
+
+        /* 用“立即执行函数”把内部变量藏起来（IIFE）：
+           外面的代码看不到 layer / stage 这些变量，避免和别的脚本撞名；
+           函数返回一个对象，只把 init（启动）和 stage（查询进度）暴露出去 */
+        var Glass = (function () {
+
+            /* 先把要用到的 DOM 元素一次找好，存进变量。
+               变量名 score 之后重复使用比每次 getElementById 更快，也更短 */
+            var layer = document.getElementById('glass-layer');    /* 整块玻璃层 */
+            var svg = document.getElementById('glass-svg');        /* 装裂纹的 <svg> */
+            var group = document.getElementById('glass-cracks');   /* 里面那个 <g>，裂纹都塞这 */
+            var flash = document.getElementById('glass-flash');    /* 白光那一层 */
+            var btn = document.getElementById('dontTouch');        /* 红色圆形按钮 */
+            var pips = document.getElementById('dontTouchPips');   /* 按钮上的“·”计数器 */
+
+            /* 状态变量：stage 记录点了几下，dead 记录页面有没有“死掉” */
+            var stage = 0;
+            var MAX = 4;            /* 第 4 下之后：死掉，不再自己退出 */
+            var dead = false;
+
+            /* origins 存“每次裂开的中心点”，下一击会从这里继续往外崩 */
+            var origins = [];
+
+            /* W / H 是画布的宽高（单位像素），后面画裂纹全按它算 */
+            var W = 1000;
+            var H = 1000;
+
+            /* 工具函数：取 [min, max) 之间的随机数 */
+            function rand(min, max) { return min + Math.random() * (max - min); }
+
+            /* 把 svg 的坐标系对齐到真实窗口大小。
+               SVG 里的坐标不是像素，而是 viewBox 定义的“用户单位”；
+               把 viewBox 设成窗口大小，1 个单位就等于 1 像素，画起来好算 */
+            function syncSize() {
+                /* Math.max(320, …) 是保险：窗口窄成一条时也别小于 320 */
+                W = Math.max(320, window.innerWidth);
+                H = Math.max(320, window.innerHeight);
+                /* setAttribute 直接改 SVG 属性：viewBox="0 0 宽 高" */
+                svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+                /* preserveAspectRatio="none"：允许拉伸，不保持比例 */
+                svg.setAttribute('preserveAspectRatio', 'none');
+            }
+
+            /* 造一个 SVG 元素的小工具。
+               注意：SVG 元素必须用 createElementNS + 命名空间创建，
+               用普通的 document.createElement('path') 是画不出来的 */
+            function el(name, attrs) {
+                var node = document.createElementNS('http://www.w3.org/2000/svg', name);
+                /* for…in 遍历传进来的属性对象，挨个 setAttribute */
+                for (var key in attrs) node.setAttribute(key, attrs[key]);
+                return node;   /* 把造好的元素交回去 */
+            }
+
+            /* 一条锯齿裂纹：从 (x0,y0) 出发，方向 angle，总长 length，分 segments 段。
+               每走一段就把方向掰一下，所以看起来是折线而不是直线 */
+            function jaggedPath(x0, y0, angle, length, segments) {
+                /* points 存路径上的点，第一个点就是起点 */
+                var points = [[x0, y0]];
+                var x = x0;
+                var y = y0;
+                var step = length / segments;   /* 每段走多长 */
+                /* i 从 1 开始：起点已经有了，只算后面的点 */
+                for (var i = 1; i <= segments; i++) {
+                    /* += 累加：在原来方向上随机偏 ±0.85 弧度（约 ±49°） */
+                    angle += rand(-0.85, 0.85);
+                    /* cos / sin 把“方向 + 距离”换算成 x / y 的位移；
+                       rand(0.6, 1.5) 让每段长短不一，像碎玻璃的断口 */
+                    x += Math.cos(angle) * step * rand(0.6, 1.5);
+                    y += Math.sin(angle) * step * rand(0.6, 1.5);
+                    points.push([x, y]);   /* push 把新点追加到数组末尾 */
+                }
+                /* 返回两个东西：d（给 <path> 用的路径字符串）和 points（后面要拿它分叉） */
+                return {
+                    /* map 把每个点变成 "x y"，再用 join(' L') 拼成 "M x y L x y L …"；
+                       M = 移动到起点，L = 直线画到下一个点；toFixed(1) 只留一位小数 */
+                    d: 'M' + points.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' L'),
+                    points: points
+                };
+            }
+
+            /* 把一条裂纹画到页面上：同一条路径画三层，叠出玻璃质感 */
+            function drawCrack(path, heavy) {
+                /* 第一层：粗、模糊 → 外发光，表现玻璃厚度 */
+                group.appendChild(el('path', { d: path.d, class: 'crack-glow' }));
+                /* 第二层：细、实白 → 裂纹本体。class 交给 CSS 去管颜色和粗细 */
+                group.appendChild(el('path', { d: path.d, class: 'crack-core' }));
+                /* 第三层：彩虹渐变线，随机出现一半，用 screen 混合模式模拟折射 */
+                if (Math.random() > 0.5) group.appendChild(el('path', { d: path.d, class: 'crack-prism' }));
+
+                /* 从主裂纹的中段再岔出几条小裂纹，碎的面积才够大 */
+                var branches = heavy ? 4 : 2;   /* 三元运算符：heavy 为真取 4，否则取 2 */
+                for (var i = 0; i < branches; i++) {
+                    /* 随机挑一个中间点当分叉起点（至少从第 1 个点起，避开端点） */
+                    var anchor = path.points[Math.max(1, Math.floor(rand(1, path.points.length - 1)))];
+                    /* 以这个点为起点，随机方向、随机长度，再画一条短裂纹 */
+                    var sub = jaggedPath(anchor[0], anchor[1], rand(0, Math.PI * 2), rand(30, heavy ? 120 : 70), 3);
+                    group.appendChild(el('path', { d: sub.d, class: 'crack-core' }));
+                }
+            }
+
+            /* 画一块碎屑：以 (cx,cy) 为中心、size 为半径，随机画个 4~6 边形 */
+            function drawShard(cx, cy, size) {
+                var pts = [];
+                var n = 4 + Math.floor(rand(0, 3));   /* 4、5 或 6 个顶点 */
+                for (var i = 0; i < n; i++) {
+                    /* 把 360° 平均分成 n 份，每份再抖一点角度，才不像正多边形 */
+                    var a = (Math.PI * 2 * i) / n + rand(-0.3, 0.3);
+                    /* 半径也随机：0.5~1.3 倍，边缘就不规整 */
+                    var r = size * rand(0.5, 1.3);
+                    /* 拼成 "x,y" 这种点坐标，polygon 的 points 属性就吃这个格式 */
+                    pts.push((cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1));
+                }
+                /* 用 <polygon> 画闭合多边形 */
+                group.appendChild(el('polygon', { points: pts.join(' '), class: 'shard' }));
+            }
+
+            /* 算出按钮中心点（第一击从这儿开始裂）。
+               getBoundingClientRect() 返回元素在屏幕上的位置和大小 */
+            function buttonCenter() {
+                var rect = btn.getBoundingClientRect();
+                /* left + width/2 = 中心 x；top + height/2 = 中心 y */
+                return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            }
+
+            /* 让整页彻底失去功能（第四下之后调用） */
+            function makeDead() {
+                dead = true;   /* 先标记状态，别的事件里就能判断了 */
+                /* 把玻璃层挪到 <html> 底下：body 之后要被加 filter 褪色，
+                   挪出去玻璃才不会被一起弄灰 */
+                document.documentElement.appendChild(layer);
+                /* 给 <html> 加 page-dead，CSS 靠它做褪色 + 禁止交互 */
+                document.documentElement.classList.add('page-dead');
+                /* 玻璃层进入 dead 状态：接管所有点击、显示提示语 */
+                layer.classList.add('dead');
+                /* 改按钮的 title（鼠标悬停时的小提示） */
+                btn.title = '已经无所谓了';
+                /* 键盘也拦掉：Tab + 回车能激活链接，空格能滚页面，都要阻止。
+                   第三个参数 true 表示在「捕获阶段」就先拦住，比页面自己的监听更早 */
+                window.addEventListener('keydown', function (event) {
+                    if (!dead) return;              /* 没死就不管 */
+                    event.preventDefault();         /* 阻止默认行为 */
+                    event.stopPropagation();        /* 不让事件继续往下传 */
+                }, true);
+            }
+
+            /* 死掉之后：随便点哪一下，就让它自己退出 */
+            function die() {
+                if (!dead) return;          /* 没死不许退出，防止误触 */
+                /* 先放一下白光：移掉 go → 强制浏览器重算样式 → 再加回去，动画才会重播 */
+                flash.classList.remove('go');
+                void flash.offsetWidth;     /* 读一次布局属性，逼浏览器立刻重排（小技巧） */
+                flash.classList.add('go');
+                /* 150 毫秒后再真正退出，让白光闪完 */
+                setTimeout(function () {
+                    layer.remove();     /* 玻璃层已经挪到 <html> 下，不清掉会盖住退出黑屏 */
+                    document.documentElement.classList.remove('page-dead');   /* 撤掉灰滤镜，黑屏文字才亮 */
+                    /* typeof 判断一下这个函数存不存在，避免报错 */
+                    if (typeof exitPage === 'function') exitPage();
+                }, 150);
+            }
+
+            /* 决定每一击的“落点”。返回一个数组，数组里有几个点就从几个点同时崩 */
+            function impactsForStage() {
+                /* 右侧的三个候选落点，x 用屏幕宽度的百分比算，所以换屏幕大小也对得上 */
+                var right = [
+                    { x: rand(W * 0.62, W * 0.95), y: rand(H * 0.10, H * 0.45) },   /* 右上 */
+                    { x: rand(W * 0.62, W * 0.95), y: rand(H * 0.55, H * 0.92) },   /* 右下 */
+                    { x: rand(W * 0.35, W * 0.60), y: rand(H * 0.70, H * 0.95) }    /* 中下 */
+                ];
+                /* 三元：origins 里有过落点就取最后一个，否则取按钮中心 */
+                var base = origins.length ? origins[origins.length - 1] : buttonCenter();
+                if (stage === 1) return [{ x: base.x, y: base.y }];          /* 第一击：只有按钮那一点 */
+                if (stage === 2) return [base].concat(right.slice(0, 2));    /* 第二击：加上右侧前两个 */
+                return [base].concat(right);          /* 第 3 下：右边也一起崩 */
+            }
+
+            /* 点一下按钮就是一次“碎”。核心流程都在这 */
+            function breakOnce() {
+                syncSize();      /* 先对齐画布尺寸 */
+                stage += 1;      /* 记一次 */
+                /* Math.sqrt 开根号：屏幕对角线长度，后面用它当“长度基准”，
+                   这样不管窗口多大，裂纹都按比例铺满 */
+                var diag = Math.sqrt(W * W + H * H);
+                var points = impactsForStage();      /* 这一击的落点表 */
+                var heavy = stage >= 2;              /* 第二下开始算“重击”，分叉更多 */
+                /* 每一档的主裂纹条数、长度、分叉数（用三元表达式一层层选） */
+                var lines = stage === 1 ? 10 : (stage === 2 ? 12 : 14);
+                var minLen = stage === 1 ? 0.20 : (stage === 2 ? 0.35 : 0.42);
+                var maxLen = stage === 1 ? 0.46 : (stage === 2 ? 0.80 : 0.95);
+                var segs = stage === 1 ? 5 : (stage === 2 ? 6 : 8);
+                /* 遍历每个落点：每处都炸一圈 */
+                points.forEach(function (origin) {
+                    /* 落点抖一点，别每次都一模一样；
+                       Math.min/Math.max 把坐标夹在画面内，别跑到屏幕外 */
+                    var cx = Math.min(W - 12, Math.max(12, origin.x + rand(-40, 40)));
+                    var cy = Math.min(H - 12, Math.max(12, origin.y + rand(-40, 40)));
+                    /* 记下这次的中心，下一击从这里继续 */
+                    origins.push({ x: cx, y: cy });
+                    /* 从这个中心放射出 lines 条主裂纹 */
+                    for (var i = 0; i < lines; i++) {
+                        /* 角度平均分：360° / 条数，再随机偏一点，避免像蜘蛛网 */
+                        var angle = (Math.PI * 2 * i) / lines + rand(-0.25, 0.25);
+                        /* 长度在 [minLen, maxLen] × 对角线 之间随机 */
+                        var length = rand(diag * minLen, diag * maxLen);
+                        drawCrack(jaggedPath(cx, cy, angle, length, segs), heavy);
+                    }
+                    /* 中心附近撒一圈碎屑 */
+                    var shards = stage === 1 ? 8 : (stage === 2 ? 16 : 26);
+                    for (var j = 0; j < shards; j++) {
+                        drawShard(cx + rand(-160, 160), cy + rand(-160, 160), rand(8, 34));
+                    }
+                });
+                /* 第 2 下开始，再往整块屏幕上撒零散裂口，让画面更像整块玻璃碎了 */
+                if (stage >= 2) {
+                    var scattered = stage === 2 ? 6 : 12;
+                    for (var k = 0; k < scattered; k++) {
+                        /* 随机取屏幕上一点（留 4% 边距） */
+                        var rx = rand(W * 0.04, W * 0.96);
+                        var ry = rand(H * 0.04, H * 0.96);
+                        /* 每个点炸 5 条短裂纹 */
+                        for (var m = 0; m < 5; m++) {
+                            drawCrack(jaggedPath(rx, ry, rand(0, Math.PI * 2), rand(diag * 0.08, diag * 0.26), 4), true);
+                        }
+                    }
+                }
+                /* 玻璃层淡入（CSS 里 #glass-layer.on 是 opacity:1） */
+                layer.classList.add('on');
+                /* 最后一下不闪白光：要看清玻璃塌下去的那下半秒 */
+                if (stage < MAX) {
+                    flash.classList.remove('go');
+                    void flash.offsetWidth;   /* 还是那句“强制重排”的小技巧 */
+                    flash.classList.add('go');
+                }
+                /* 按钮变暗（CSS .cracked），并显示点了几个点 */
+                btn.classList.add('cracked');
+                pips.textContent = '·'.repeat(stage);   /* repeat 把字符串重复 n 遍 */
+                if (stage >= MAX) {
+                    /* 第四下：玻璃最后抖一下，然后整页死掉 —— 不退出 */
+                    layer.classList.add('doomed');     /* 整屏压暗 */
+                    void layer.offsetWidth;            /* 强制重排，让下面的动画能播 */
+                    layer.classList.add('collapsing'); /* 抖动 0.5 秒 */
+                    setTimeout(function () {
+                        layer.classList.remove('collapsing');
+                        makeDead();                    /* 时间到：进入“死掉”状态 */
+                    }, 500);
+                } else if (stage === MAX - 1) {
+                    /* 倒数第二下：整屏压暗，明显要塌了 */
+                    layer.classList.add('doomed');
+                    btn.title = '最后一层了';
+                } else {
+                    /* 前两下：只改提示文字 */
+                    btn.title = stage === 1 ? '还来得及停手' : '已经裂成筛子了';
+                }
+            }
+
+            /* 初始化：绑好事件，准备好尺寸 */
+            function init() {
+                syncSize();                                        /* 先按当前窗口定画布 */
+                window.addEventListener('resize', syncSize);       /* 窗口大小变了就重新对齐 */
+                /* 给按钮绑点击事件 */
+                btn.addEventListener('click', function (event) {
+                    event.stopPropagation();        /* 别让这次点击继续冒泡，免得触发别处逻辑 */
+                    if (dead || stage >= MAX) return;   /* 死掉了或已经点满，直接不管 */
+                    breakOnce();                    /* 正常流程：碎一次 */
+                });
+                /* 死掉之后，点在任意位置（玻璃层这时候能接住点击）都会退出 */
+                layer.addEventListener('click', function (event) {
+                    if (!dead) return;              /* 没死的话，点击不该走这里 */
+                    event.stopPropagation();
+                    die();                          /* 死掉了：闪一下白光然后退出 */
+                });
+            }
+
+            /* 只把这两个放进返回值：init 给外面启动用，stage 是查进度的小接口 */
+            return { init: init, stage: function () { return stage; } };
+        })();   /* 这里两对括号：前面的 (function(){…}) 只是定义，后面的 () 才是立刻执行 */
+
+        Glass.init();   /* 启动 */
+
+        /* ---------------- 三、全局快捷键 ---------------- */
+
+        /* 按 Esc 就关掉弹窗（不管焦点在哪，事件都会传到 document） */
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        /* ---------------- 四、右栏的下载链接 ---------------- */
+
+        /* 这里又用了一次 IIFE：临时变量 RAW / VIEW 用完就丢，不污染全局 */
+        /* 好处：文件名里的中文交给 encodeURIComponent 转义，
+           以后换文件只改 HTML 里的 data-ppt / data-dl，不用手抄一长串 %E5%BC%80… */
+        (function () {
+            /* 仓库里“原始文件”的地址前缀（raw 表示拿原文件，不是网页） */
+            var RAW = 'https://raw.githubusercontent.com/wocao123103/smart_schedule/main/';
+            /* 微软的在线预览服务：把文件地址塞进 src 参数，就能在网页里看 PPT */
+            var VIEW = 'https://view.officeapps.live.com/op/view.aspx?src=';
+
+            /* PPT：走微软的在线预览，点开就是网页版的幻灯片。
+               querySelectorAll 按属性选择器 [data-ppt] 找出所有带这个属性的 <a>；
+               forEach 遍历它们（NodeList 也支持 forEach） */
+            document.querySelectorAll('[data-ppt]').forEach(function (link) {
+                /* link.dataset.ppt 取的是 HTML 里 data-ppt="…" 的值；
+                   encodeURIComponent 会把中文、空格转成 %XX，拼进 URL 才不会坏 */
+                link.href = VIEW + encodeURIComponent(RAW + link.dataset.ppt);
+                /* 加 rel：让新页面拿不到本页的 window 引用，也不带来源地址过去 */
+                link.rel = 'noopener noreferrer';
+            });
+
+            /* 压缩包：直接指向 GitHub 的原始文件，浏览器会开始下载 */
+            document.querySelectorAll('[data-dl]').forEach(function (link) {
+                link.href = RAW + encodeURIComponent(link.dataset.dl);
+                link.rel = 'noopener noreferrer';
+            });
+        })();
+    </script>
+
+</body>
+
+</html>
