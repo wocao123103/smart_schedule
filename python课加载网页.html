@@ -367,43 +367,49 @@
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            align-items: stretch;
-            gap: 16px;
-            margin: 6px 0 4px;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 6px 0 2px;
         }
 
-        /* 并排时按钮字号收一点，两个才塞得进一行 */
+        /* 每一项 = 按钮 + 它自己的说明，说明挂在按钮正下方 */
+        .dl-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* .content a 会把链接设成 display:block + margin:0 auto，
+           那样两个按钮会被推到两侧，所以这里必须把 margin 清零 */
         .dl-pair .dl-btn {
+            display: inline-block;
+            margin: 0;
             font-size: 18px;
             padding: 13px 26px;
             text-align: center;
-            min-width: 212px;   /* 两个按钮等宽，看着才像一对 */
+            min-width: 212px;
         }
 
-        /* 右边那个用描边款，和左边的渐变主按钮区分开 */
-        .dl-pair .dl-btn.is-alt {
-            background: rgba(255, 255, 255, .08);
-            border-color: rgba(255, 255, 255, .34);
-            box-shadow: 0 12px 26px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255, 255, 255, .28);
-        }
-
-        .dl-pair .dl-btn.is-alt:hover {
-            background: rgba(255, 255, 255, .17);
-            border-color: rgba(255, 255, 255, .58);
-        }
-
-        /* 按钮下面那行小字：版本 + 提取码 */
-        .dl-hint {
-            margin: 4px 0 6px;
-            text-align: center;
-            font-size: 13.5px;
+        /* 按钮下面那行小字：每个按钮各配一句 */
+        .dl-cap {
+            font-size: 12.5px;
             letter-spacing: .02em;
-            color: rgba(255, 255, 255, .60);
+            color: rgba(255, 255, 255, .62);
         }
 
-        .dl-hint b {
+        .dl-cap b {
             color: #ffffff;
-            letter-spacing: .10em;
+            letter-spacing: .08em;
+        }
+
+        /* 两个通道共用的说明 */
+        .dl-hint {
+            margin: 6px 0 6px;
+            text-align: center;
+            font-size: 13px;
+            letter-spacing: .02em;
+            color: rgba(255, 255, 255, .55);
         }
 
         .dl-btn {
@@ -846,17 +852,22 @@
         </a>
         <!-- 两个入口定位不同：在线版只是体验，本地版才是正式部署 -->
         <div class="entry-note">体验版 · 浏览器打开即用，<b>数据存在当前浏览器</b>，换设备不跟着走</div>
-        <!-- 下载按钮：放在 h3 正下方，靠 data-dl 由脚本拼出 GitHub 地址 -->
         <!-- 本地部署版：两个通道并排，装的是同一份 v2.3.0 安装包
              左边 = GitHub 原始文件（由脚本按 data-dl 拼地址）
-             右边 = 百度网盘（直链带提取码，点开自动填） -->
+             右边 = 百度网盘（直链带提取码，点开自动填）
+             每个按钮下面挂一句自己的说明，再共享一句版本说明 -->
         <div class="dl-pair">
-            <a class="dl-btn" data-dl="安装_智能日程助手.zip">GitHub 下载（zip）</a>
-            <a class="dl-btn is-alt" href="https://pan.baidu.com/s/1aqX3brHgAZbEe-xzJHaNUQ?pwd=8913"
-                target="_blank" rel="noopener noreferrer">百度网盘下载（zip）</a>
+            <div class="dl-item">
+                <a class="dl-btn" data-dl="安装_智能日程助手.zip">GitHub 下载（zip）</a>
+                <span class="dl-cap">仓库原始文件 · 直接下载</span>
+            </div>
+            <div class="dl-item">
+                <a class="dl-btn" href="https://pan.baidu.com/s/1aqX3brHgAZbEe-xzJHaNUQ?pwd=8913"
+                    target="_blank" rel="noopener noreferrer">百度网盘下载（zip）</a>
+                <span class="dl-cap">网盘提取码 <b>8913</b></span>
+            </div>
         </div>
-        <div class="dl-hint">本地部署版 v2.3.0 · 两个包内容相同 · 网盘提取码 <b>8913</b></div>
-        <div class="entry-note">本地版 · 装到这台电脑，<b>数据在本地 SQLite</b>，PySide6 控制面板</div>
+        <div class="dl-hint">本地部署版 v2.3.0 · 两个包内容相同 · 装到这台电脑，数据在本地 SQLite</div>
     </div>
     <!-- ==================== 右侧栏：内容留给你自己改 ====================
          和左边不是一套样式（青色描边 / 小圆角 / 按钮是粉的）。
