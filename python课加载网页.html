@@ -362,6 +362,40 @@
             color: rgba(255, 255, 255, .88);
         }
 
+        /* ============ 网盘下载：版本号下面那条备选通道 ============ */
+        .dl-alt {
+            margin: 10px 0 4px;
+            text-align: center;
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, .60);
+        }
+
+        .dl-alt a {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .30);
+            background: rgba(255, 255, 255, .07);
+            color: #ffffff;
+            text-decoration: none;
+            transition: background .15s ease, border-color .15s ease, transform .15s ease;
+        }
+
+        .dl-alt a:hover {
+            background: rgba(255, 255, 255, .16);
+            border-color: rgba(255, 255, 255, .55);
+            transform: translateY(-1px);
+        }
+
+        .dl-alt .code {
+            margin-left: 6px;
+        }
+
+        .dl-alt .code b {
+            color: #ffffff;
+            letter-spacing: .10em;
+        }
+
         .dl-btn {
             display: inline-block;
             padding: 14px 32px;
@@ -809,6 +843,12 @@
             </a>
         </div>
         <div class="entry-note">本地版 · 装到这台电脑，<b>数据在本地 SQLite</b>，PySide6 控制面板</div>
+        <!-- v2.3.0 最新的安装包走百度网盘（提取码 8913）；GitHub 那个 zip 链接保留作备用通道 -->
+        <div class="dl-alt">
+            <a href="https://pan.baidu.com/s/1aqX3brHgAZbEe-xzJHaNUQ?pwd=8913" target="_blank"
+                rel="noopener noreferrer">最新版 v2.3.0 · 百度网盘下载 ↗</a>
+            <span class="code">提取码 <b>8913</b></span>
+        </div>
     </div>
     <!-- ==================== 右侧栏：内容留给你自己改 ====================
          和左边不是一套样式（青色描边 / 小圆角 / 按钮是粉的）。
@@ -842,9 +882,6 @@
         </div>
         <div class="side-item">
             <a data-ppt="智能日程助手-优化报告-终版.pptx">4 优化报告 · 2026-11</a>
-        </div>
-        <div class="side-item">
-            <a data-ppt="智能日程助手-中期报告-终版.pptx">4 中期报告 · 2026-11</a>
         </div>
         <!-- 底部：下载 zip + 刷新本页 -->
         <div class="side-actions">
