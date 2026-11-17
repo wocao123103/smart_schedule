@@ -362,36 +362,46 @@
             color: rgba(255, 255, 255, .88);
         }
 
-        /* ============ 网盘下载：版本号下面那条备选通道 ============ */
-        .dl-alt {
-            margin: 10px 0 4px;
+        /* ============ 两个下载通道并排：左 GitHub zip，右 百度网盘 ============ */
+        .dl-pair {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: stretch;
+            gap: 16px;
+            margin: 6px 0 4px;
+        }
+
+        /* 并排时按钮字号收一点，两个才塞得进一行 */
+        .dl-pair .dl-btn {
+            font-size: 18px;
+            padding: 13px 26px;
+            text-align: center;
+            min-width: 212px;   /* 两个按钮等宽，看着才像一对 */
+        }
+
+        /* 右边那个用描边款，和左边的渐变主按钮区分开 */
+        .dl-pair .dl-btn.is-alt {
+            background: rgba(255, 255, 255, .08);
+            border-color: rgba(255, 255, 255, .34);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, .42), inset 0 1px 0 rgba(255, 255, 255, .28);
+        }
+
+        .dl-pair .dl-btn.is-alt:hover {
+            background: rgba(255, 255, 255, .17);
+            border-color: rgba(255, 255, 255, .58);
+        }
+
+        /* 按钮下面那行小字：版本 + 提取码 */
+        .dl-hint {
+            margin: 4px 0 6px;
             text-align: center;
             font-size: 13.5px;
+            letter-spacing: .02em;
             color: rgba(255, 255, 255, .60);
         }
 
-        .dl-alt a {
-            display: inline-block;
-            padding: 6px 15px;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, .30);
-            background: rgba(255, 255, 255, .07);
-            color: #ffffff;
-            text-decoration: none;
-            transition: background .15s ease, border-color .15s ease, transform .15s ease;
-        }
-
-        .dl-alt a:hover {
-            background: rgba(255, 255, 255, .16);
-            border-color: rgba(255, 255, 255, .55);
-            transform: translateY(-1px);
-        }
-
-        .dl-alt .code {
-            margin-left: 6px;
-        }
-
-        .dl-alt .code b {
+        .dl-hint b {
             color: #ffffff;
             letter-spacing: .10em;
         }
@@ -837,18 +847,16 @@
         <!-- 两个入口定位不同：在线版只是体验，本地版才是正式部署 -->
         <div class="entry-note">体验版 · 浏览器打开即用，<b>数据存在当前浏览器</b>，换设备不跟着走</div>
         <!-- 下载按钮：放在 h3 正下方，靠 data-dl 由脚本拼出 GitHub 地址 -->
-        <div class="dl-row">
-            <a class="dl-btn" data-dl="安装_智能日程助手.zip">
-                下载本地部署版安装助手（zip）· v2.3.0
-            </a>
+        <!-- 本地部署版：两个通道并排，装的是同一份 v2.3.0 安装包
+             左边 = GitHub 原始文件（由脚本按 data-dl 拼地址）
+             右边 = 百度网盘（直链带提取码，点开自动填） -->
+        <div class="dl-pair">
+            <a class="dl-btn" data-dl="安装_智能日程助手.zip">GitHub 下载（zip）</a>
+            <a class="dl-btn is-alt" href="https://pan.baidu.com/s/1aqX3brHgAZbEe-xzJHaNUQ?pwd=8913"
+                target="_blank" rel="noopener noreferrer">百度网盘下载（zip）</a>
         </div>
+        <div class="dl-hint">本地部署版 v2.3.0 · 两个包内容相同 · 网盘提取码 <b>8913</b></div>
         <div class="entry-note">本地版 · 装到这台电脑，<b>数据在本地 SQLite</b>，PySide6 控制面板</div>
-        <!-- v2.3.0 最新的安装包走百度网盘（提取码 8913）；GitHub 那个 zip 链接保留作备用通道 -->
-        <div class="dl-alt">
-            <a href="https://pan.baidu.com/s/1aqX3brHgAZbEe-xzJHaNUQ?pwd=8913" target="_blank"
-                rel="noopener noreferrer">最新版 v2.3.0 · 百度网盘下载 ↗</a>
-            <span class="code">提取码 <b>8913</b></span>
-        </div>
     </div>
     <!-- ==================== 右侧栏：内容留给你自己改 ====================
          和左边不是一套样式（青色描边 / 小圆角 / 按钮是粉的）。
